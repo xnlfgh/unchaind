@@ -1,0 +1,15 @@
+{
+    "mappers": [
+        {
+            "type": "siggy",
+            "username": "username",
+            "password": "password"
+        }
+    ],
+    "notifiers": [
+        {
+            "type": "discord",
+            "hook": "hook"
+        }
+    ]
+}
