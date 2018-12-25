@@ -2,8 +2,8 @@
 
 import json
 
-from kaart_killbot.http import HTTPSession
-from kaart_killbot import config
+from unchaind.http import HTTPSession
+from unchaind import config
 
 
 async def discord(message: str) -> None:

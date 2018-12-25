@@ -7,14 +7,14 @@ from typing import List, Dict, Any
 
 from tornado import ioloop
 
-from kaart_killbot.mapper.siggy import Map as SiggyMap
+from unchaind.mapper.siggy import Map as SiggyMap
 
-from kaart_killbot.universe import Universe, System
-from kaart_killbot.kills import loop_zkillboard
-from kaart_killbot.util import get_mapper, get_transport, system_name
-from kaart_killbot.log import app_log, setup_log
+from unchaind.universe import Universe, System
+from unchaind.kills import loop_zkillboard
+from unchaind.util import get_mapper, get_transport, system_name
+from unchaind.log import app_log, setup_log
 
-from kaart_killbot import config
+from unchaind import config
 
 
 async def universe_cleanup(universe: Universe) -> Universe:
@@ -78,7 +78,7 @@ class Command:
            their login credentials."""
 
         app_log().info(
-            "Starting `kaart_killbot` with {} mappers.".format(
+            "Starting `unchaind` with {} mappers.".format(
                 len(config.mappers)
             )
         )

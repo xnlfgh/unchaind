@@ -2,8 +2,10 @@
     "mappers": [
         {
             "type": "siggy",
-            "username": "username",
-            "password": "password"
+            "credentials": {
+                "username": "username",
+                "password": "password"
+            }
         }
     ],
     "notifiers": [

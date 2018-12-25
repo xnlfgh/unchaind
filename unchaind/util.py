@@ -1,13 +1,13 @@
-"""Minor utilities for kaart_killbot."""
+"""Minor utilities for unchaind."""
 
 import json
 
 from typing import Dict, Union, Type
 
-from kaart_killbot.http import HTTPSession
-from kaart_killbot.universe import System
+from unchaind.http import HTTPSession
+from unchaind.universe import System
 
-from kaart_killbot.mapper.siggy import (
+from unchaind.mapper.siggy import (
     Map as SiggyMapper,
     Transport as SiggyTransport,
 )

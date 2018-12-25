@@ -1,4 +1,4 @@
-"""Exceptions for use by kaart_killbot."""
+"""Exceptions for use by unchaind."""
 
 
 class NotLoggedIn(Exception):

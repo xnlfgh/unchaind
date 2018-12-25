@@ -1,4 +1,4 @@
-"""Configure Python's logging module for use by kaart_killbot."""
+"""Configure Python's logging module for use by unchaind."""
 
 from typing import Any
 
@@ -12,7 +12,7 @@ def setup_log() -> None:
         level=logging.DEBUG,
         format="%(asctime)s:%(levelname)s:%(message)s",
         handlers=[
-            logging.FileHandler("kaart_killbot.log"),
+            logging.FileHandler("unchaind.log"),
             logging.StreamHandler(),
         ],
     )

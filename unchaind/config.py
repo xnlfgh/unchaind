@@ -1,7 +1,7 @@
 import os
 import json
 
-path = os.path.expanduser("~/.kaart-killbot.json")
+path = os.path.expanduser("~/.unchaind.json")
 
 if not os.path.exists(path):
     print(f"No config file found at {path}")

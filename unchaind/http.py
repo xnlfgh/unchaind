@@ -6,7 +6,7 @@ from http.cookies import SimpleCookie
 
 from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPResponse
 
-from kaart_killbot.constant import DEFAULT_HEADERS
+from unchaind.constant import DEFAULT_HEADERS
 
 
 class HTTPSession:

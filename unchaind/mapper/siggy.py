@@ -13,9 +13,9 @@ from urllib.parse import urlencode
 
 from lxml import etree
 
-from kaart_killbot.universe import Universe, System, Connection, State
-from kaart_killbot.http import HTTPSession
-from kaart_killbot.log import app_log
+from unchaind.universe import Universe, System, Connection, State
+from unchaind.http import HTTPSession
+from unchaind.log import app_log
 
 
 class Map:

@@ -3,7 +3,7 @@
 from typing import Dict, Optional, Set, Callable, Awaitable, FrozenSet
 from itertools import chain
 
-from kaart_killbot.exception import ConnectionDuplicate, ConnectionNonexistent
+from unchaind.exception import ConnectionDuplicate, ConnectionNonexistent
 
 
 class State:

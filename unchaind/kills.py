@@ -4,11 +4,11 @@ from typing import Optional, Callable, Dict, Awaitable, Any
 
 import json
 
-from kaart_killbot.http import HTTPSession
-from kaart_killbot.universe import System, Universe
-from kaart_killbot.notify import discord
-from kaart_killbot.util import system_name
-from kaart_killbot.log import app_log
+from unchaind.http import HTTPSession
+from unchaind.universe import System, Universe
+from unchaind.notify import discord
+from unchaind.util import system_name
+from unchaind.log import app_log
 
 
 async def loop_zkillboard(
