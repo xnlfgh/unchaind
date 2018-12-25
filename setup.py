@@ -9,10 +9,9 @@ setup(
     author_email="cmdr@supakeen.com",
     packages=find_packages(),
     install_requires=["tornado", "lxml"],
-    tests_require=["nose", "aiounittest"],
+    tests_require=["pytest", "pytest-cov"],
     entry_points={
         "console_scripts": ["unchaind=unchaind.command:main"]
     },
-    extras_require={"dev": ["pre-commit", "flake8", "black"]},
-    test_suite="nose.collector",
+    extras_require={"dev": ["pre-commit", "flake8", "black"]}
 )
