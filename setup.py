@@ -8,6 +8,7 @@ setup(
     author="supakeen",
     author_email="cmdr@supakeen.com",
     packages=find_packages(),
+    setup_requires=["pytest-runner", "pytest-cov"],
     install_requires=["tornado", "lxml"],
     tests_require=["pytest", "pytest-cov"],
     entry_points={
