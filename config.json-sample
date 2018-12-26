@@ -11,7 +11,8 @@
     "notifiers": [
         {
             "type": "discord",
-            "subscribes_to": []
+            "subscribes_to": [],
+            "webhook": null
         }
     ]
 }

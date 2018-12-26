@@ -12,7 +12,7 @@ async def discord(config: Dict[str, Any], message: str) -> None:
     http = HTTPSession()
 
     await http.request(
-        url=config["notifiers"][0]["url"],
+        url=config["notifiers"][0]["webhook"],
         method="POST",
         body=json.dumps({"content": message}),
     )
