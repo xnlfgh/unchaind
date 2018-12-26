@@ -12,6 +12,7 @@ from unchaind.log import app_log
 
 
 async def loop_zkillboard(
+    config: Dict[str, Any],
     universe: Universe,
     callback: Optional[Callable[[Dict[str, Any]], Awaitable[bool]]] = None,
 ) -> None:
@@ -62,5 +63,6 @@ async def loop_zkillboard(
 
         name = await system_name(system)
         await discord(
-            f"Chain kill ({name}) https://zkillboard.com/kill/{kill_id}/"
+            config,
+            f"Chain kill ({name}) https://zkillboard.com/kill/{kill_id}/",
         )

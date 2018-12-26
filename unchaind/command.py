@@ -3,7 +3,7 @@ import re
 import logging
 
 from asyncio import gather
-from typing import List, Dict, Any
+from typing import List, Dict, Any, IO
 
 import click
 
@@ -15,8 +15,7 @@ from unchaind.universe import Universe, System
 from unchaind.kills import loop_zkillboard
 from unchaind.util import get_mapper, get_transport, system_name
 from unchaind.log import app_log, setup_log
-
-from unchaind import config
+from unchaind.config import parse_config
 
 
 async def universe_cleanup(universe: Universe) -> Universe:
@@ -71,19 +70,22 @@ class Command:
     universe: Universe
     mappers: List[SiggyMap]
 
-    def __init__(self) -> None:
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.universe = Universe.from_empty()
         self.mappers = []
+        self.config = config
 
     async def initialize(self) -> None:
         """Start by initializing all our mappers and setting them up with
            their login credentials."""
 
         app_log().info(
-            "Starting `unchaind` with {} mappers.".format(len(config.mappers))
+            "Starting `unchaind` with {} mappers.".format(
+                len(self.config["mappers"])
+            )
         )
 
-        for mapper in config.mappers:
+        for mapper in self.config["mappers"]:
             transport = await get_transport(mapper["type"]).from_credentials(
                 **mapper["credentials"]
             )
@@ -149,19 +151,28 @@ class Command:
 
         while True:
             app_log().debug("loop_kills running")
-            await loop_zkillboard(self.universe, callback=killmail_cleanup)
+            await loop_zkillboard(
+                self.config, self.universe, callback=killmail_cleanup
+            )
 
 
 # XXX this is the reason mypy is currently disabled for this file , figure out
 # XXX how to fix the untyped argument function from click's generated decorator
 @click.command()
 @click.option(
+    "--config",
+    "-c",
+    required=True,
+    type=click.File(),
+    help="Config file to use.",
+)
+@click.option(
     "--verbosity",
     "-v",
     count=True,
     help="Logging verbosity, passing more heightens the verbosity. ",
 )
-def main(verbosity: int) -> None:
+def main(config: IO[Any], verbosity: int) -> None:
     """Run our main application."""
 
     # Convert the verbose count to a number
@@ -171,7 +182,8 @@ def main(verbosity: int) -> None:
     # log setup
     setup_log(level)
 
-    command = Command()
+    # Parse configuration
+    command = Command(config=parse_config(config.read()))
 
     loop: ioloop.IOLoop = ioloop.IOLoop.current()
     loop.add_callback(command.initialize)
