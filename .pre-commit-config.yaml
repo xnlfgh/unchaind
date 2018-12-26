@@ -16,4 +16,4 @@ repos:
       language: system
       entry: mypy
       types: [python]
-      exclude: ^docs/conf.py unchaind/command.py
+      exclude: ^docs/conf.py

@@ -156,8 +156,6 @@ class Command:
             )
 
 
-# XXX this is the reason mypy is currently disabled for this file , figure out
-# XXX how to fix the untyped argument function from click's generated decorator
 @click.command()
 @click.option(
     "--config",
