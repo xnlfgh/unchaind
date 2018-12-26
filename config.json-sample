@@ -11,7 +11,7 @@
     "notifiers": [
         {
             "type": "discord",
-            "hook": "hook"
+            "subscribes_to": []
         }
     ]
 }

@@ -111,8 +111,12 @@ class Command:
         poll_mappers.start()
 
         # XXX don't run this when no kill type notifiers are on
-        loop: ioloop.IOLoop = ioloop.IOLoop.current()
-        loop.add_callback(self.loop_kills)
+        if any(
+            "kills_in_chain" in n["subscribes_to"]
+            for n in self.config["notifiers"]
+        ):
+            loop: ioloop.IOLoop = ioloop.IOLoop.current()
+            loop.add_callback(self.loop_kills)
 
     async def periodic_mappers(self, init: bool = True) -> None:
         """Run all of our mappers periodically."""
