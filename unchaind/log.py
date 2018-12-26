@@ -6,15 +6,12 @@ import logging
 import sys
 
 
-def setup_log() -> None:
+def setup_log(level: int = logging.CRITICAL) -> None:
     """Setup logging when ran as a command instead of used as a library."""
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=level,
         format="%(asctime)s:%(levelname)s:%(message)s",
-        handlers=[
-            logging.FileHandler("unchaind.log"),
-            logging.StreamHandler(),
-        ],
+        handlers=[logging.FileHandler("unchaind.log"), logging.StreamHandler()],
     )
 
     # XXX the type hander is a bit weird

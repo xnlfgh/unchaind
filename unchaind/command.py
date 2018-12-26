@@ -1,9 +1,11 @@
 """The command you can actually run from your command line."""
-
 import re
+import logging
 
 from asyncio import gather
 from typing import List, Dict, Any
+
+import click
 
 from tornado import ioloop
 
@@ -78,9 +80,7 @@ class Command:
            their login credentials."""
 
         app_log().info(
-            "Starting `unchaind` with {} mappers.".format(
-                len(config.mappers)
-            )
+            "Starting `unchaind` with {} mappers.".format(len(config.mappers))
         )
 
         for mapper in config.mappers:
@@ -152,12 +152,24 @@ class Command:
             await loop_zkillboard(self.universe, callback=killmail_cleanup)
 
 
-def main() -> None:
+# XXX this is the reason mypy is currently disabled for this file , figure out
+# XXX how to fix the untyped argument function from click's generated decorator
+@click.command()
+@click.option(
+    "--verbosity",
+    "-v",
+    count=True,
+    help="Logging verbosity, passing more heightens the verbosity. ",
+)
+def main(verbosity: int) -> None:
     """Run our main application."""
+
+    # Convert the verbose count to a number
+    level = logging.CRITICAL - (verbosity * 10)
 
     # Setup some logging shenanigans; our exception handler and our default
     # log setup
-    setup_log()
+    setup_log(level)
 
     command = Command()
 
