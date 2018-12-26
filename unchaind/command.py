@@ -171,7 +171,10 @@ class Command:
     help="Logging verbosity, passing more heightens the verbosity. ",
 )
 def main(config: IO[Any], verbosity: int) -> None:
-    """Run our main application."""
+    """This is the ``unchaind`` EVE online tool. It allows for interactivity
+       between wormhole space and your Discord.
+
+       Report issues at: https://github.com/supakeen/unchaind"""
 
     # Convert the verbose count to a number
     level = logging.CRITICAL - (verbosity * 10)
