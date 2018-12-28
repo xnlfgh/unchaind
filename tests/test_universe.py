@@ -67,19 +67,15 @@ class UniverseTest(unittest.TestCase):
 
         self.assertEqual(len(universe1.systems), 3)
 
-        delta1 = unchaind_universe.Delta.from_universes(
-            universe1, universe2
-        )
+        delta1 = unchaind_universe.Delta.from_universes(universe1, universe2)
 
-        self.assertEquals(len(delta1.connections_add), 0)
-        self.assertEquals(len(delta1.connections_del), 3)
+        self.assertEqual(len(delta1.connections_add), 0)
+        self.assertEqual(len(delta1.connections_del), 3)
 
-        delta2 = unchaind_universe.Delta.from_universes(
-            universe2, universe1
-        )
+        delta2 = unchaind_universe.Delta.from_universes(universe2, universe1)
 
-        self.assertEquals(len(delta2.connections_add), 3)
-        self.assertEquals(len(delta2.connections_del), 0)
+        self.assertEqual(len(delta2.connections_add), 3)
+        self.assertEqual(len(delta2.connections_del), 0)
 
     def test_universe_update_with(self) -> None:
         universe1 = unchaind_universe.Universe.from_empty()
