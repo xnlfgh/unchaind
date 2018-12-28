@@ -104,6 +104,8 @@ class Command:
 
             loop: ioloop.IOLoop = ioloop.IOLoop.current()
             loop.add_callback(self.loop_kills)
+        else:
+            app_log().warning("Did not find any notifiers subscribed to kills")
 
     async def periodic_mappers(self, init: bool = True) -> None:
         """Run all of our mappers periodically."""

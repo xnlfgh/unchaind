@@ -26,6 +26,35 @@
                 "alliance_loss": [99005065]
             },
             "webhook": "a_hook_url"
+        },
+        {
+            "type": "slack",
+            "subscribes_to": "kill",
+            "filter": {
+                "require_all_of": {
+                    "location": ["chain"]
+                },
+                "exclude_if_any": {
+                    "alliance_loss": [99999999],
+                    "location": [30000142, 30002187]
+                }
+            },
+            "webhook": "a_hook_url"
+        },
+        {
+            "type": "slack",
+            "subscribes_to": "kill",
+            "filter": {
+                "require_all_of": {
+                    "alliance_kill": [99999999],
+                    "minimum_value": [500e6]
+                },
+                "exclude_if_any": {
+                    "alliance_loss": [99999999]
+                }
+            },
+            "webhook": "a_hook_url"
         }
+
     ]
 }
