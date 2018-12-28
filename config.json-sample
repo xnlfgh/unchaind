@@ -10,7 +10,8 @@
             "type": "siggy",
             "credentials": {
                 "username": "username",
-                "password": "password"
+                "password": "password",
+                "home_system_id": 31002238
             }
         }
     ],

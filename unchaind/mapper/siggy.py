@@ -63,21 +63,21 @@ class Transport:
     """Represents a Siggy connection to be used to read raw data from Siggy."""
 
     http: HTTPSession
+    config: Dict[str, Any]
 
-    def __init__(self) -> None:
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.http = HTTPSession()
+        self.config = config
 
     @classmethod
-    async def from_credentials(
-        cls, username: str, password: str
-    ) -> "Transport":
+    async def from_config(cls, config: Dict[str, Any]) -> "Transport":
         """Create an initial instance of a Siggy class, this logs in with the
            provided username and password and does an initial fill of the
            universe."""
 
-        instance = cls()
+        instance = cls(config)
 
-        await instance.login(username, password)
+        await instance.login(config["username"], config["password"])
         await instance.update()
 
         return instance
@@ -124,7 +124,7 @@ class Transport:
             method="POST",
             body=urlencode(
                 {
-                    "systemID": 31_002_238,
+                    "systemID": self.config["home_system_id"],
                     "mapLastUpdate": 0,
                     "lastUpdate": 0,
                     "mapOpen": "true",
