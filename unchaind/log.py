@@ -1,17 +1,27 @@
 """Configure Python's logging module for use by unchaind."""
 
-from typing import Any
+from typing import Any, Optional, List, Union
 
 import logging
 import sys
 
 
-def setup_log(level: int = logging.CRITICAL) -> None:
+def setup_log(
+    level: int = logging.CRITICAL, path: Optional[str] = None
+) -> None:
     """Setup logging when ran as a command instead of used as a library."""
+
+    handlers: List[Union[logging.StreamHandler, logging.FileHandler]] = [
+        logging.StreamHandler()
+    ]
+
+    if path is not None:
+        handlers = [logging.FileHandler(path)]
+
     logging.basicConfig(
         level=level,
         format="%(asctime)s:%(levelname)s:%(message)s",
-        handlers=[logging.FileHandler("unchaind.log"), logging.StreamHandler()],
+        handlers=handlers,
     )
 
     # XXX the type hander is a bit weird

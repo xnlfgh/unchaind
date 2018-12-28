@@ -3,7 +3,7 @@ import re
 import logging
 
 from asyncio import gather
-from typing import List, Dict, Any, IO
+from typing import List, Dict, Any, Optional
 
 import click
 
@@ -169,7 +169,7 @@ class Command:
     "--config",
     "-c",
     required=True,
-    type=click.File(),
+    type=click.Path(exists=True),
     help="Config file to use.",
 )
 @click.option(
@@ -178,7 +178,13 @@ class Command:
     count=True,
     help="Logging verbosity, passing more heightens the verbosity. ",
 )
-def main(config: IO[Any], verbosity: int) -> None:
+@click.option(
+    "--log-file",
+    "-l",
+    type=click.Path(exists=False),
+    help="Logfile to log to. Normally `unchaind` logs to stdout.",
+)
+def main(config: str, verbosity: int, log_file: Optional[str]) -> None:
     """This is the ``unchaind`` EVE online tool. It allows for interactivity
        between wormhole space and your Discord.
 
@@ -189,10 +195,10 @@ def main(config: IO[Any], verbosity: int) -> None:
 
     # Setup some logging shenanigans; our exception handler and our default
     # log setup
-    setup_log(level)
+    setup_log(level, log_file)
 
     # Parse configuration
-    command = Command(config=parse_config(config.read()))
+    command = Command(config=parse_config(config))
 
     loop: ioloop.IOLoop = ioloop.IOLoop.current()
     loop.add_callback(command.initialize)
