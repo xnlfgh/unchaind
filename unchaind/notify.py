@@ -20,3 +20,6 @@ async def discord(notifier: Dict[str, Any], killmail: Dict[str, Any]) -> None:
         method="POST",
         body=json.dumps({"content": message}),
     )
+
+
+types = {"discord": discord}

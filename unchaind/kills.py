@@ -8,7 +8,7 @@ from asyncio import gather
 
 from unchaind.http import HTTPSession
 from unchaind.universe import System, Universe
-from unchaind.notify import discord
+from unchaind.notify import types
 from unchaind.util import system_name
 from unchaind.log import app_log
 
@@ -51,7 +51,7 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
     if not matches:
         return
 
-    await gather(*[discord(match, killmail) for match in matches])
+    await gather(*[types[match["type"]](match, killmail) for match in matches])
 
 
 async def _filter_location(
