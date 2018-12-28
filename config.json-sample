@@ -1,4 +1,10 @@
 {
+    "filters": {
+        "our_alliance_id": 99005065,
+        "wspace_only": true,
+        "exclude_our_losses": true,
+        "exclude_not_our_kills": true
+    },
     "mappers": [
         {
             "type": "siggy",
