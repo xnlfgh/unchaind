@@ -6,6 +6,7 @@ from asyncio import gather
 from typing import List, Dict, Any, Optional
 
 import click
+import functools
 
 from tornado import ioloop
 
@@ -35,13 +36,24 @@ async def universe_cleanup(universe: Universe) -> Universe:
     return universe
 
 
-async def killmail_cleanup(killmail: Dict[str, Any]) -> bool:
+async def killmail_cleanup(
+    config: Dict[str, Any], killmail: Dict[str, Any]
+) -> bool:
     """Filter any killmail that has a character from our corp on it. Return
        true when the killmail has to be filtered."""
 
+    # TODO: filters should be configurable per destination
+    # (e.g. have an #intel channel for any and all activity in the chain, but
+    #  also put our own high-value kills in #discuss)
+
+    OUR_ALLIANCE_ID = config["filters"]["our_alliance_id"]
+
     victim = killmail.get("victim", {})
 
-    if victim.get("alliance_id", None) == 99_005_065:
+    if (
+        victim.get("alliance_id", None) == OUR_ALLIANCE_ID
+        and config["filters"]["exclude_our_losses"]
+    ):
         app_log().debug("Filtered kill; victim in alliance")
         return True
 
@@ -50,17 +62,22 @@ async def killmail_cleanup(killmail: Dict[str, Any]) -> bool:
     if solar_system_id:
         solar_system = System(solar_system_id)
         solar_system_name = await system_name(solar_system)
-        if not re.match(r"J\d{6}", solar_system_name):
+        if config["filters"]["wspace_only"] and not re.match(
+            r"J\d{6}", solar_system_name
+        ):
             app_log().debug("Filtered kill; not in w-space")
             return True
 
     attackers = killmail.get("attackers", [])
-    attackers = any(a.get("alliance_id", None) == 99_005_065 for a in attackers)
+    attackers = any(
+        a.get("alliance_id", None) == OUR_ALLIANCE_ID for a in attackers
+    )
 
-    if attackers:
+    if config["filters"]["exclude_not_our_kills"] and attackers:
         app_log().debug("Filtered kill; no attackers in alliance")
+        return True
 
-    return bool(attackers)
+    return False
 
 
 class Command:
@@ -160,7 +177,9 @@ class Command:
         while True:
             app_log().debug("loop_kills running")
             await loop_zkillboard(
-                self.config, self.universe, callback=killmail_cleanup
+                self.config,
+                self.universe,
+                callback=functools.partial(killmail_cleanup, self.config),
             )
 
 
