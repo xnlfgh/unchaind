@@ -132,7 +132,9 @@ async def _filter_alliance_loss(
 
     victim = killmail.get("victim", {})
 
+    print(repr(victim.get("alliance_id")), repr(values))
     for value in values:
+        print(repr(victim.get("alliance_id")), repr(value))
         if victim.get("alliance_id", None) == value:
             return False
 
@@ -206,15 +208,79 @@ async def _filter_corporation_loss(
     return True
 
 
+async def _filter_character(
+    values: List[int], killmail: Dict[str, Any], universe: Universe
+) -> bool:
+    """For the character filter the victim or any of the attackers have to be
+       in the list of characters."""
+
+    loss = await _filter_character_kill(values, killmail, universe)
+
+    if not loss:
+        return False
+
+    kill = await _filter_character_kill(values, killmail, universe)
+
+    if not kill:
+        return False
+
+    return True
+
+
+async def _filter_character_kill(
+    values: List[int], killmail: Dict[str, Any], universe: Universe
+) -> bool:
+    """For the character filter the victim or any of the attackers have to be
+       in the list of characters."""
+
+    attackers = killmail.get("attackers", [])
+
+    for value in values:
+        if any(a.get("character_id", None) == value for a in attackers):
+            return False
+
+    app_log().debug(
+        "Killmail %s was filtered due to no character in %s",
+        killmail["killmail_id"],
+        values,
+    )
+
+    return True
+
+
+async def _filter_character_loss(
+    values: List[int], killmail: Dict[str, Any], universe: Universe
+) -> bool:
+    """For the character filter the victim or any of the attackers have to be
+       in the list of characters."""
+
+    victim = killmail.get("victim", {})
+
+    for value in values:
+        if victim.get("character_id", None) == value:
+            return False
+
+    app_log().debug(
+        "Killmail %s was filtered due to no character in %s",
+        killmail["killmail_id"],
+        values,
+    )
+
+    return True
+
+
 # I gave up on trying to type this properly...
 filters: Dict[str, Any] = {
     "location": _filter_location,
     "alliance": _filter_alliance,
+    "character": _filter_character,
     "alliance_kill": _filter_alliance_kill,
     "alliance_loss": _filter_alliance_loss,
     "corporation": _filter_corporation,
     "corporation_kill": _filter_corporation_kill,
     "corporation_loss": _filter_corporation_loss,
+    "character_kill": _filter_character_kill,
+    "character_loss": _filter_character_loss,
 }
 
 
