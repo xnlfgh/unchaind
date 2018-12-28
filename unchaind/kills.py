@@ -41,24 +41,17 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
 
     try:
         killmail = package["killmail"]
-
-        system = System(killmail["solar_system_id"])
     except KeyError:
         app_log().warning("Received unparseable killmail from zkillboard")
         return
 
-    # This is where filtering will happen
-    filtered = await filter_killmail(config, universe, killmail)
+    # Find any matching notifiers
+    matches = await match_killmail(config, universe, killmail)
 
-    if filtered:
+    if not matches:
         return
 
-    # XXX submit notification
-    name = await system_name(system)
-    kill_id = killmail["killmail_id"]
-    await discord(
-        config, f"Chain kill ({name}) https://zkillboard.com/kill/{kill_id}/"
-    )
+    await gather(*[discord(match, killmail) for match in matches])
 
 
 async def _filter_location(
@@ -225,12 +218,14 @@ filters: Dict[str, Any] = {
 }
 
 
-async def filter_killmail(
+async def match_killmail(
     config: Dict[str, Any], universe: Universe, killmail: Dict[str, Any]
-) -> bool:
+) -> List[Dict[str, Any]]:
 
-    """Filter a killmail with its set of notifier filters. Returns True when a
-       killmail is not expected by any notifier and thus filtered"""
+    """Filter a killmail with its set of notifier filters. Returns the notifier
+       if there's a match for it."""
+
+    matches = []
 
     # Now let's see if any kill notifiers' filters match
     for notifier in config["notifiers"]:
@@ -246,7 +241,8 @@ async def filter_killmail(
                 for name, values in notifier["filter"].items()
             ]
         )
-        if not all(results):
-            return False
 
-    return True
+        if not all(results):
+            matches.append(notifier)
+
+    return matches
