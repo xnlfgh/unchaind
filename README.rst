@@ -27,21 +27,20 @@ Examples
 Some examples is probably the easiest way to get started. The most important
 bit is to get your configuration right so let's start with a sample
 configuration that takes all kills that happen for a certain alliance and
-post them to a Discord webhook.
+post them to a Discord webhook.::
 
-.. code:: json
-    {
-        "notifiers": [
-            {
-                "type": "discord",
-                "subscribes_to": "kill",
-                "filter": {
-                    "alliance": [99005065]
-                },
-                "webhook": "a_hook_url"
-            },
-        ]
-    } 
+  {
+      "notifiers": [
+          {
+              "type": "discord",
+              "subscribes_to": "kill",
+              "filter": {
+                  "alliance": [99005065]
+              },
+              "webhook": "a_hook_url"
+          },
+      ]
+  } 
 
 After saving this in ``config.json`` you can then run
 ``unchaind -c config.json`` to get going. This will start posting all kills
