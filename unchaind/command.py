@@ -1,20 +1,18 @@
 """The command you can actually run from your command line."""
-import re
 import logging
 
 from asyncio import gather
 from typing import List, Dict, Any, Optional
 
 import click
-import functools
 
 from tornado import ioloop
 
 from unchaind.mapper.siggy import Map as SiggyMap
 
-from unchaind.universe import Universe, System
-from unchaind.kills import loop_zkillboard
-from unchaind.util import get_mapper, get_transport, system_name
+from unchaind.universe import Universe
+from unchaind.kills import loop as loop_kills
+from unchaind.util import get_mapper, get_transport
 from unchaind.log import app_log, setup_log
 from unchaind.config import parse_config
 
@@ -36,50 +34,6 @@ async def universe_cleanup(universe: Universe) -> Universe:
     return universe
 
 
-async def killmail_cleanup(
-    config: Dict[str, Any], killmail: Dict[str, Any]
-) -> bool:
-    """Filter any killmail that has a character from our corp on it. Return
-       true when the killmail has to be filtered."""
-
-    # TODO: filters should be configurable per destination
-    # (e.g. have an #intel channel for any and all activity in the chain, but
-    #  also put our own high-value kills in #discuss)
-
-    OUR_ALLIANCE_ID = config["filters"]["our_alliance_id"]
-
-    victim = killmail.get("victim", {})
-
-    if (
-        victim.get("alliance_id", None) == OUR_ALLIANCE_ID
-        and config["filters"]["exclude_our_losses"]
-    ):
-        app_log().debug("Filtered kill; victim in alliance")
-        return True
-
-    solar_system_id = killmail.get("solar_system_id", None)
-
-    if solar_system_id:
-        solar_system = System(solar_system_id)
-        solar_system_name = await system_name(solar_system)
-        if config["filters"]["wspace_only"] and not re.match(
-            r"J\d{6}", solar_system_name
-        ):
-            app_log().debug("Filtered kill; not in w-space")
-            return True
-
-    attackers = killmail.get("attackers", [])
-    attackers = any(
-        a.get("alliance_id", None) == OUR_ALLIANCE_ID for a in attackers
-    )
-
-    if config["filters"]["exclude_not_our_kills"] and attackers:
-        app_log().debug("Filtered kill; no attackers in alliance")
-        return True
-
-    return False
-
-
 class Command:
     """The running command that wraps everything to read configuration and
        setup all the mappers."""
@@ -96,42 +50,58 @@ class Command:
         """Start by initializing all our mappers and setting them up with
            their login credentials."""
 
-        app_log().info(
-            "Starting `unchaind` with {} mappers.".format(
-                len(self.config["mappers"])
+        if len(self.config["mappers"]):
+            app_log().info(
+                "`unchaind` with {} mappers.".format(
+                    len(self.config["mappers"])
+                )
             )
-        )
 
-        for mapper in self.config["mappers"]:
-            transport = await get_transport(mapper["type"]).from_credentials(
-                **mapper["credentials"]
+            for mapper in self.config["mappers"]:
+                transport = await get_transport(
+                    mapper["type"]
+                ).from_credentials(**mapper["credentials"])
+                mapper = get_mapper(mapper["type"])(transport)
+                self.mappers.append(mapper)
+
+            app_log().info("Mappers initialized, starting initial pass.")
+
+            # Run our initial pass to get all the results without firing their
+            # callbacks since we're booting
+            await self.periodic_mappers(init=False)
+
+            app_log().info(
+                "Initial finished, got {} systems and {} connections.".format(
+                    len(self.universe.systems), len(self.universe.connections)
+                )
             )
-            mapper = get_mapper(mapper["type"])(transport)
-            self.mappers.append(mapper)
 
-        app_log().info("Mappers initialized, starting initial pass.")
-
-        # Run our initial pass to get all the results without firing their
-        # callbacks since we're booting
-        await self.periodic_mappers(init=False)
-
-        app_log().info(
-            "Initial finished, got {} systems and {} connections.".format(
-                len(self.universe.systems), len(self.universe.connections)
+            # We can keep calling our periodic mappers now
+            poll_mappers: ioloop.PeriodicCallback = ioloop.PeriodicCallback(
+                self.periodic_mappers, 5000
             )
-        )
+            poll_mappers.start()
 
-        # We can keep calling our periodic mappers now
-        poll_mappers: ioloop.PeriodicCallback = ioloop.PeriodicCallback(
-            self.periodic_mappers, 5000
-        )
-        poll_mappers.start()
-
-        # XXX don't run this when no kill type notifiers are on
-        if any(
-            "kills_in_chain" in n["subscribes_to"]
-            for n in self.config["notifiers"]
+        # Check if any notifiers subscribe to kills
+        if len(
+            [
+                n
+                for n in self.config["notifiers"]
+                if n["subscribes_to"] == "kill"
+            ]
         ):
+            app_log().info(
+                "`unchaind` with {} notifiers[kill].".format(
+                    len(
+                        [
+                            n
+                            for n in self.config["notifiers"]
+                            if n["subscribes_to"] == "kill"
+                        ]
+                    )
+                )
+            )
+
             loop: ioloop.IOLoop = ioloop.IOLoop.current()
             loop.add_callback(self.loop_kills)
 
@@ -176,11 +146,7 @@ class Command:
 
         while True:
             app_log().debug("loop_kills running")
-            await loop_zkillboard(
-                self.config,
-                self.universe,
-                callback=functools.partial(killmail_cleanup, self.config),
-            )
+            await loop_kills(self.config, self.universe)
 
 
 @click.command()

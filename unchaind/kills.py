@@ -1,8 +1,10 @@
 """Functions to interface with killboards."""
 
-from typing import Optional, Callable, Dict, Awaitable, Any
-
 import json
+import re
+
+from typing import Dict, Any, List
+from asyncio import gather
 
 from unchaind.http import HTTPSession
 from unchaind.universe import System, Universe
@@ -11,17 +13,10 @@ from unchaind.util import system_name
 from unchaind.log import app_log
 
 
-async def loop_zkillboard(
-    config: Dict[str, Any],
-    universe: Universe,
-    callback: Optional[Callable[[Dict[str, Any]], Awaitable[bool]]] = None,
-) -> None:
+async def loop(config: Dict[str, Any], universe: Universe) -> None:
 
     """Run a single iteration of the zkillboard RedisQ API which lists all
-       kills then compare them to the systems currently in the universe.
-
-       If any kill happened in a system in that universe then send a
-       notification."""
+       kills then we filter those kills."""
 
     http = HTTPSession()
 
@@ -45,24 +40,213 @@ async def loop_zkillboard(
         return
 
     try:
-        kill_id = package["killID"]
-        kill_mail = package["killmail"]
+        killmail = package["killmail"]
 
-        system = System(kill_mail["solar_system_id"])
+        system = System(killmail["solar_system_id"])
     except KeyError:
         app_log().warning("Received unparseable killmail from zkillboard")
         return
 
-    if system in universe.systems:
-        if callback:
-            filtered = await callback(kill_mail)
-            if filtered:
-                return
+    # This is where filtering will happen
+    filtered = await filter_killmail(config, universe, killmail)
 
-        app_log().warning("Killmail in chain")
+    if filtered:
+        return
 
-        name = await system_name(system)
-        await discord(
-            config,
-            f"Chain kill ({name}) https://zkillboard.com/kill/{kill_id}/",
+    # XXX submit notification
+    name = await system_name(system)
+    kill_id = killmail["killmail_id"]
+    await discord(
+        config, f"Chain kill ({name}) https://zkillboard.com/kill/{kill_id}/"
+    )
+
+
+async def _filter_location(
+    values: List[str], killmail: Dict[str, Any], universe: Universe
+) -> bool:
+    solar_system = System(killmail.get("solar_system_id", None))
+
+    if "chain" in values:
+        if solar_system in universe.systems:
+            return False
+        else:
+            app_log().debug(
+                "Killmail %s was filtered due to not being in chain",
+                killmail["killmail_id"],
+            )
+
+    if "wspace" in values:
+        # XXX do this mapping based on system id so this lookup doesn't need
+        # XXX to happen for every kill
+        solar_system_name = await system_name(solar_system)
+
+        if re.match(r"J\d{6}", solar_system_name):
+            return False
+        else:
+            app_log().debug(
+                "Killmail %s was filtered due to not being in wspace",
+                killmail["killmail_id"],
+            )
+
+    return True
+
+
+async def _filter_alliance(
+    values: List[int], killmail: Dict[str, Any], universe: Universe
+) -> bool:
+    """For the alliance filter the victim or any of the attackers have to be
+       in the list of alliances."""
+
+    loss = await _filter_alliance_kill(values, killmail, universe)
+
+    if not loss:
+        return False
+
+    kill = await _filter_alliance_kill(values, killmail, universe)
+
+    if not kill:
+        return False
+
+    return True
+
+
+async def _filter_alliance_kill(
+    values: List[int], killmail: Dict[str, Any], universe: Universe
+) -> bool:
+    """For the alliance filter the victim or any of the attackers have to be
+       in the list of alliances."""
+
+    attackers = killmail.get("attackers", [])
+
+    for value in values:
+        if any(a.get("alliance_id", None) == value for a in attackers):
+            return False
+
+    app_log().debug(
+        "Killmail %s was filtered due to no alliance in %s",
+        killmail["killmail_id"],
+        values,
+    )
+
+    return True
+
+
+async def _filter_alliance_loss(
+    values: List[int], killmail: Dict[str, Any], universe: Universe
+) -> bool:
+    """For the alliance filter the victim or any of the attackers have to be
+       in the list of alliances."""
+
+    victim = killmail.get("victim", {})
+
+    for value in values:
+        if victim.get("alliance_id", None) == value:
+            return False
+
+    app_log().debug(
+        "Killmail %s was filtered due to no alliance in %s",
+        killmail["killmail_id"],
+        values,
+    )
+
+    return True
+
+
+async def _filter_corporation(
+    values: List[int], killmail: Dict[str, Any], universe: Universe
+) -> bool:
+    """For the corporation filter the victim or any of the attackers have to be
+       in the list of corporations."""
+
+    loss = await _filter_corporation_kill(values, killmail, universe)
+
+    if not loss:
+        return False
+
+    kill = await _filter_corporation_kill(values, killmail, universe)
+
+    if not kill:
+        return False
+
+    return True
+
+
+async def _filter_corporation_kill(
+    values: List[int], killmail: Dict[str, Any], universe: Universe
+) -> bool:
+    """For the corporation filter the victim or any of the attackers have to be
+       in the list of corporations."""
+
+    attackers = killmail.get("attackers", [])
+
+    for value in values:
+        if any(a.get("corporation_id", None) == value for a in attackers):
+            return False
+
+    app_log().debug(
+        "Killmail %s was filtered due to no corporation in %s",
+        killmail["killmail_id"],
+        values,
+    )
+
+    return True
+
+
+async def _filter_corporation_loss(
+    values: List[int], killmail: Dict[str, Any], universe: Universe
+) -> bool:
+    """For the corporation filter the victim or any of the attackers have to be
+       in the list of corporations."""
+
+    victim = killmail.get("victim", {})
+
+    for value in values:
+        if victim.get("corporation_id", None) == value:
+            return False
+
+    app_log().debug(
+        "Killmail %s was filtered due to no corporation in %s",
+        killmail["killmail_id"],
+        values,
+    )
+
+    return True
+
+
+# I gave up on trying to type this properly...
+filters: Dict[str, Any] = {
+    "location": _filter_location,
+    "alliance": _filter_alliance,
+    "alliance_kill": _filter_alliance_kill,
+    "alliance_loss": _filter_alliance_loss,
+    "corporation": _filter_corporation,
+    "corporation_kill": _filter_corporation_kill,
+    "corporation_loss": _filter_corporation_loss,
+}
+
+
+async def filter_killmail(
+    config: Dict[str, Any], universe: Universe, killmail: Dict[str, Any]
+) -> bool:
+
+    """Filter a killmail with its set of notifier filters. Returns True when a
+       killmail is not expected by any notifier and thus filtered"""
+
+    # Now let's see if any kill notifiers' filters match
+    for notifier in config["notifiers"]:
+        if notifier["subscribes_to"] != "kill":
+            continue
+
+        # This reads a bit difficult but this checks if all filters for this
+        # notifier were False. If they were then that notifier would like to
+        # receive this kill!
+        results = await gather(
+            *[
+                filters[name](values, killmail, universe)
+                for name, values in notifier["filter"].items()
+            ]
         )
+        if not all(results):
+            return False
+
+    return True

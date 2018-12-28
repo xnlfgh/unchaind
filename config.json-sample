@@ -1,24 +1,30 @@
 {
-    "filters": {
-        "our_alliance_id": 99005065,
-        "wspace_only": true,
-        "exclude_our_losses": true,
-        "exclude_not_our_kills": true
-    },
     "mappers": [
         {
             "type": "siggy",
             "credentials": {
-                "username": "username",
-                "password": "password"
+                "username": "",
+                "password": ""
             }
         }
     ],
     "notifiers": [
         {
             "type": "discord",
-            "subscribes_to": [],
-            "webhook": null
+            "subscribes_to": "kill",
+            "filter": {
+                "location": ["chain"],
+                "alliance": [99005065]
+            },
+            "webhook": "a_hook_url"
+        },
+        {
+            "type": "discord",
+            "subscribes_to": "kill",
+            "filter": {
+                "alliance_loss": [99005065]
+            },
+            "webhook": "a_hook_url"
         }
     ]
 }
