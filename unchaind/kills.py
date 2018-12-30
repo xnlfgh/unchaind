@@ -308,7 +308,8 @@ async def match_killmail(
             ]
         )
 
-        if not all(results):
+        # if not (any matchers returned True) <=> if (all matchers returned False)
+        if not any(results):
             matches.append(notifier)
 
     return matches
