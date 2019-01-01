@@ -158,9 +158,7 @@ async def _filter_alliance_loss(
 
     victim = killmail.get("victim", {})
 
-    print(repr(victim.get("alliance_id")), repr(values))
     for value in values:
-        print(repr(victim.get("alliance_id")), repr(value))
         if victim.get("alliance_id", None) == value:
             return False
 
