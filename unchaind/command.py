@@ -50,7 +50,7 @@ class Command:
         """Start by initializing all our mappers and setting them up with
            their login credentials."""
 
-        if len(self.config["mappers"]):
+        if "mappers" in self.config and len(self.config["mappers"]):
             app_log().info(
                 "`unchaind` with {} mappers.".format(
                     len(self.config["mappers"])
@@ -83,7 +83,7 @@ class Command:
             poll_mappers.start()
 
         # Check if any notifiers subscribe to kills
-        if len(
+        if "notifiers" in self.config and len(
             [
                 n
                 for n in self.config["notifiers"]
