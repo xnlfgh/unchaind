@@ -6,6 +6,7 @@
    They also allow for callbacks when changes occur in their internal state."""
 
 import json
+import logging
 
 from typing import Dict, Any
 from io import StringIO
@@ -15,7 +16,9 @@ from lxml import etree
 
 from unchaind.universe import Universe, System, Connection, State
 from unchaind.http import HTTPSession
-from unchaind.log import app_log
+
+
+log = logging.getLogger(__name__)
 
 
 class Map:
@@ -137,5 +140,5 @@ class Transport:
             return dict(json.loads(update_response.body.decode("utf8")))
         except (ValueError, AttributeError, json.decoder.JSONDecodeError):
             # XXX we probably want to do something fancy here
-            app_log().warning("Received invalid json from Siggy")
+            log.warning("Received invalid json from Siggy")
             raise ValueError()  # Fix this

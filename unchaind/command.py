@@ -13,8 +13,11 @@ from unchaind.mapper.siggy import Map as SiggyMap
 from unchaind.universe import Universe
 from unchaind.kills import loop as loop_kills
 from unchaind.util import get_mapper, get_transport
-from unchaind.log import app_log, setup_log
+from unchaind.log import setup_log
 from unchaind.config import parse_config
+
+
+log = logging.getLogger(__name__)
 
 
 async def universe_cleanup(universe: Universe) -> Universe:
@@ -51,7 +54,7 @@ class Command:
            their login credentials."""
 
         if "mappers" in self.config and len(self.config["mappers"]):
-            app_log().info(
+            log.info(
                 "`unchaind` with {} mappers.".format(
                     len(self.config["mappers"])
                 )
@@ -64,13 +67,13 @@ class Command:
                 mapper = get_mapper(mapper["type"])(transport)
                 self.mappers.append(mapper)
 
-            app_log().info("Mappers initialized, starting initial pass.")
+            log.info("Mappers initialized, starting initial pass.")
 
             # Run our initial pass to get all the results without firing their
             # callbacks since we're booting
             await self.periodic_mappers(init=False)
 
-            app_log().info(
+            log.info(
                 "Initial finished, got {} systems and {} connections.".format(
                     len(self.universe.systems), len(self.universe.connections)
                 )
@@ -90,7 +93,7 @@ class Command:
                 if n["subscribes_to"] == "kill"
             ]
         ):
-            app_log().info(
+            log.info(
                 "`unchaind` with {} notifiers[kill].".format(
                     len(
                         [
@@ -105,12 +108,12 @@ class Command:
             loop: ioloop.IOLoop = ioloop.IOLoop.current()
             loop.add_callback(self.loop_kills)
         else:
-            app_log().warning("Did not find any notifiers subscribed to kills")
+            log.warning("Did not find any notifiers subscribed to kills")
 
     async def periodic_mappers(self, init: bool = True) -> None:
         """Run all of our mappers periodically."""
 
-        app_log().debug("periodic_mappers running")
+        log.debug("periodic_mappers running")
 
         results = await gather(
             *[mapper.update() for mapper in self.mappers],
@@ -135,7 +138,7 @@ class Command:
             ]
         )
 
-        app_log().debug(
+        log.debug(
             "periodic_mappers finished, got {} sys and {} conn.".format(
                 len(self.universe.systems), len(self.universe.connections)
             )
@@ -147,7 +150,7 @@ class Command:
            notify channels if anything happens."""
 
         while True:
-            app_log().debug("loop_kills running")
+            log.debug("loop_kills running")
             await loop_kills(self.config, self.universe)
 
 

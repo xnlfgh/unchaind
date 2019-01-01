@@ -1,5 +1,5 @@
 """Functions to interface with killboards."""
-
+import logging
 import json
 import re
 
@@ -10,7 +10,9 @@ from unchaind.http import HTTPSession
 from unchaind.universe import System, Universe
 from unchaind.notify import sinks
 from unchaind.util import system_name
-from unchaind.log import app_log
+
+
+log = logging.getLogger(__name__)
 
 
 async def loop(config: Dict[str, Any], universe: Universe) -> None:
@@ -37,13 +39,13 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
     package = data.get("package", None)
 
     if not package:
-        app_log().debug("empty reply from zkb")
+        log.debug("empty reply from zkb")
         return
 
     try:
         killmail = package["killmail"]
     except KeyError:
-        app_log().warning("Received unparseable killmail from zkillboard")
+        log.warning("Received unparseable killmail from zkillboard")
         return
 
     kill_id = killmail["killmail_id"]
@@ -53,7 +55,7 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
     matches = await match_killmail(config, universe, package)
 
     if not matches:
-        app_log().debug(f"no matches for {kill_id}")
+        log.debug(f"no matches for {kill_id}")
         return
 
     await gather(*[sinks[match["type"]](match, message) for match in matches])
@@ -69,7 +71,7 @@ async def _filter_location(
         if solar_system in universe.systems:
             return False
         else:
-            app_log().debug(
+            log.debug(
                 "Killmail %s was filtered due to not being in chain",
                 killmail["killmail_id"],
             )
@@ -82,13 +84,13 @@ async def _filter_location(
         if re.match(r"J\d{6}", solar_system_name):
             return False
         else:
-            app_log().debug(
+            log.debug(
                 "Killmail %s was filtered due to not being in wspace",
                 killmail["killmail_id"],
             )
 
     if solar_system.identifier in values:
-        app_log().debug(
+        log.debug(
             "Killmail %s: found %s in %s",
             killmail["killmail_id"],
             str(solar_system),
@@ -132,7 +134,7 @@ async def _filter_alliance_kill(
         if any(a.get("alliance_id", None) == value for a in attackers):
             return False
 
-    app_log().debug(
+    log.debug(
         "Killmail %s was filtered due to no alliance in %s",
         killmail["killmail_id"],
         values,
@@ -157,7 +159,7 @@ async def _filter_alliance_loss(
         if victim.get("alliance_id", None) == value:
             return False
 
-    app_log().debug(
+    log.debug(
         "Killmail %s was filtered due to no alliance in %s",
         killmail["killmail_id"],
         values,
@@ -199,7 +201,7 @@ async def _filter_corporation_kill(
         if any(a.get("corporation_id", None) == value for a in attackers):
             return False
 
-    app_log().debug(
+    log.debug(
         "Killmail %s was filtered due to no corporation in %s",
         killmail["killmail_id"],
         values,
@@ -222,7 +224,7 @@ async def _filter_corporation_loss(
         if victim.get("corporation_id", None) == value:
             return False
 
-    app_log().debug(
+    log.debug(
         "Killmail %s was filtered due to no corporation in %s",
         killmail["killmail_id"],
         values,
@@ -264,7 +266,7 @@ async def _filter_character_kill(
         if any(a.get("character_id", None) == value for a in attackers):
             return False
 
-    app_log().debug(
+    log.debug(
         "Killmail %s was filtered due to no character in %s",
         killmail["killmail_id"],
         values,
@@ -287,7 +289,7 @@ async def _filter_character_loss(
         if victim.get("character_id", None) == value:
             return False
 
-    app_log().debug(
+    log.debug(
         "Killmail %s was filtered due to no character in %s",
         killmail["killmail_id"],
         values,
@@ -306,7 +308,7 @@ async def _filter_minimum_value(
 
     rv = minimum > kill_value
     if rv:
-        app_log().debug(
+        log.debug(
             "Killmail %s was filtered due to value less than threshold (%s < %s)",
             package["killmail"]["killmail_id"],
             kill_value,
