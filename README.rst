@@ -35,7 +35,9 @@ post them to a Discord webhook.::
               "type": "discord",
               "subscribes_to": "kill",
               "filter": {
-                  "alliance": [99005065]
+                  "require_all_of": {
+                      "alliance": [99005065]
+                  }
               },
               "webhook": "a_hook_url"
           },
