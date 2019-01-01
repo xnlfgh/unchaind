@@ -5,15 +5,12 @@ import json
 from typing import Dict, Any
 
 from unchaind.http import HTTPSession
+from unchaind.log import app_log
 
 
-async def discord(notifier: Dict[str, Any], killmail: Dict[str, Any]) -> None:
-    """Send a discord message to the configured channel."""
+async def discord(notifier: Dict[str, Any], message: str) -> None:
+    """Send a Discord message to the configured channel."""
     http = HTTPSession()
-
-    kill_id = killmail["killmail_id"]
-
-    message = f"https://zkillboard.com/kill/{kill_id}/"
 
     await http.request(
         url=notifier["webhook"],
@@ -22,4 +19,20 @@ async def discord(notifier: Dict[str, Any], killmail: Dict[str, Any]) -> None:
     )
 
 
-types = {"discord": discord}
+async def console(notifier: Dict[str, Any], message: str) -> None:
+    """Log a message.  Intended for debugging use."""
+    app_log().info("NOTIFICATION: " + message)
+
+
+async def slack(notifier: Dict[str, Any], message: str) -> None:
+    """Send a Slack message to the configured channel."""
+    http = HTTPSession()
+
+    await http.request(
+        url=notifier["webhook"],
+        method="POST",
+        body=json.dumps({"text": message}),
+    )
+
+
+sinks = {"discord": discord, "console": console, "slack": slack}
