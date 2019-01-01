@@ -55,7 +55,7 @@ class Command:
 
         if "mappers" in self.config and len(self.config["mappers"]):
             log.info(
-                "`unchaind` with {} mappers.".format(
+                "initialize: `unchaind` with {} mappers.".format(
                     len(self.config["mappers"])
                 )
             )
@@ -67,14 +67,14 @@ class Command:
                 mapper = get_mapper(mapper["type"])(transport)
                 self.mappers.append(mapper)
 
-            log.info("Mappers initialized, starting initial pass.")
+            log.info("initialize: mappers initialized, starting initial pass.")
 
             # Run our initial pass to get all the results without firing their
             # callbacks since we're booting
             await self.periodic_mappers(init=False)
 
             log.info(
-                "Initial finished, got {} systems and {} connections.".format(
+                "initialize: mappers finished, got {} systems and {} connections.".format(
                     len(self.universe.systems), len(self.universe.connections)
                 )
             )
@@ -94,7 +94,7 @@ class Command:
             ]
         ):
             log.info(
-                "`unchaind` with {} notifiers[kill].".format(
+                "initialize: `unchaind` with {} notifiers[kill].".format(
                     len(
                         [
                             n
@@ -108,12 +108,14 @@ class Command:
             loop: ioloop.IOLoop = ioloop.IOLoop.current()
             loop.add_callback(self.loop_kills)
         else:
-            log.warning("Did not find any notifiers subscribed to kills")
+            log.warning(
+                "initialize: did not find any notifiers subscribed to kills"
+            )
 
     async def periodic_mappers(self, init: bool = True) -> None:
         """Run all of our mappers periodically."""
 
-        log.debug("periodic_mappers running")
+        log.debug("periodic_mappers: running")
 
         results = await gather(
             *[mapper.update() for mapper in self.mappers],
@@ -139,7 +141,7 @@ class Command:
         )
 
         log.debug(
-            "periodic_mappers finished, got {} sys and {} conn.".format(
+            "periodic_mappers: finished, got {} sys and {} conn.".format(
                 len(self.universe.systems), len(self.universe.connections)
             )
         )
@@ -150,7 +152,7 @@ class Command:
            notify channels if anything happens."""
 
         while True:
-            log.debug("loop_kills running")
+            log.debug("loop_kills: running")
             await loop_kills(self.config, self.universe)
 
 
