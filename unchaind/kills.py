@@ -112,7 +112,7 @@ async def _filter_alliance(
     """For the alliance filter the victim or any of the attackers have to be
        in the list of alliances."""
 
-    loss = await _filter_alliance_kill(values, package, universe)
+    loss = await _filter_alliance_loss(values, package, universe)
 
     if not loss:
         return False
@@ -179,7 +179,7 @@ async def _filter_corporation(
     """For the corporation filter the victim or any of the attackers have to be
        in the list of corporations."""
 
-    loss = await _filter_corporation_kill(values, package, universe)
+    loss = await _filter_corporation_loss(values, package, universe)
 
     if not loss:
         return False
@@ -244,7 +244,7 @@ async def _filter_character(
     """For the character filter the victim or any of the attackers have to be
        in the list of characters."""
 
-    loss = await _filter_character_kill(values, package, universe)
+    loss = await _filter_character_loss(values, package, universe)
 
     if not loss:
         return False

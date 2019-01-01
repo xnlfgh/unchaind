@@ -41,7 +41,7 @@ class NotifierKillTest(unittest.TestCase):
             loop.run_until_complete(
                 unchaind_kills._filter_alliance([1], package, universe)
             ),
-            True,
+            False,
         )
 
     def test__filter_alliance_attacker_match(self) -> None:
@@ -203,7 +203,7 @@ class NotifierKillTest(unittest.TestCase):
             loop.run_until_complete(
                 unchaind_kills._filter_corporation([1], package, universe)
             ),
-            True,
+            False,
         )
 
     def test__filter_corporation_attacker_match(self) -> None:
@@ -365,7 +365,7 @@ class NotifierKillTest(unittest.TestCase):
             loop.run_until_complete(
                 unchaind_kills._filter_character([1], package, universe)
             ),
-            True,
+            False,
         )
 
     def test__filter_character_attacker_match(self) -> None:
@@ -503,16 +503,16 @@ class NotifierKillTest(unittest.TestCase):
                 "victim": {"character_id": 2},
                 "attackers": [{"character_id": 1}],
             },
-            "zkb": {
-                "totalValue": 999999.99
-            }
+            "zkb": {"totalValue": 999_999.99},
         }
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_minimum_value([1e6], package, universe)
+                unchaind_kills._filter_minimum_value(
+                    [1_000_000], package, universe
+                )
             ),
-            True
+            True,
         )
 
     def test__filter_minimum_value_match(self) -> None:
@@ -524,14 +524,14 @@ class NotifierKillTest(unittest.TestCase):
                 "victim": {"character_id": 2},
                 "attackers": [{"character_id": 1}],
             },
-            "zkb": {
-                "totalValue": 999999.99
-            }
+            "zkb": {"totalValue": 999_999.99},
         }
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_minimum_value([1e5], package, universe)
+                unchaind_kills._filter_minimum_value(
+                    [100_000], package, universe
+                )
             ),
-            False
+            False,
         )
