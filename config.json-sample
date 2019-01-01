@@ -4,29 +4,12 @@
             "type": "siggy",
             "credentials": {
                 "username": "",
-                "password": ""
+                "password": "",
                 "home_system_id": 31002238
             }
         }
     ],
     "notifiers": [
-        {
-            "type": "discord",
-            "subscribes_to": "kill",
-            "filter": {
-                "location": ["chain"],
-                "alliance": [99005065]
-            },
-            "webhook": "a_hook_url"
-        },
-        {
-            "type": "discord",
-            "subscribes_to": "kill",
-            "filter": {
-                "alliance_loss": [99005065]
-            },
-            "webhook": "a_hook_url"
-        },
         {
             "type": "slack",
             "subscribes_to": "kill",
