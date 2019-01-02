@@ -8,7 +8,7 @@ from asyncio import gather
 
 from unchaind.http import HTTPSession
 from unchaind.universe import System, Universe
-from unchaind.notify import sinks
+from unchaind.sink import sinks
 from unchaind.util import system_name
 
 
