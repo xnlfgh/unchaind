@@ -1,5 +1,5 @@
 import logging
-import json
+import pytoml
 import os
 
 from typing import Dict, Any
@@ -14,4 +14,4 @@ def parse_config(path: str) -> Dict[str, Any]:
         raise SystemExit(1)
 
     with open(path) as handle:
-        return dict(json.load(handle))
+        return dict(pytoml.load(handle))

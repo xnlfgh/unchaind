@@ -29,20 +29,37 @@ bit is to get your configuration right so let's start with a sample
 configuration that takes all kills that happen for a certain alliance and
 post them to a Discord webhook.::
 
-  {
-      "notifiers": [
-          {
-              "type": "discord",
-              "subscribes_to": "kill",
-              "filter": {
-                  "require_all_of": {
-                      "alliance": [99005065]
-                  }
-              },
-              "webhook": "a_hook_url"
-          },
-      ]
-  } 
+  [[mappers]]
+      type = "siggy"
+  
+      [[mappers.credentials]]
+          username = "bla"
+          password = "bla"
+          home_system = 31002238
+  
+  [[notifiers]]
+      type = "slack"
+      webhook = "hook_url"
+      subscribes_to = ["kill"]
+  
+      [[notifiers.filter]]
+          [[notifiers.filter.require_all_of]]
+              location = ["chain"]
+          [[notifiers.filter.exclude_if_any]]
+              alliance_loss = [99999999]
+              location = [30000142, 30002187]
+  
+  [[notifiers]]
+      type = "discord"
+      webhook = "hook_url"
+      subscribes_to = ["kill"]
+  
+      [[notifiers.filter]]
+          [[notifiers.filter.require_all_of]]
+              alliance = [99999999]
+              minimum_value = [500000000]
+          [[notifiers.filter.exclude_if_any]]
+              alliance_loss = [99999998]
 
 After saving this in ``config.json`` you can then run
 ``unchaind -c config.json`` to get going. This will start posting all kills
