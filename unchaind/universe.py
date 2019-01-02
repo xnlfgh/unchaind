@@ -65,18 +65,14 @@ class Universe:
 
     def __init__(
         self,
-        cb_add_connection: Optional[
-            Callable[[Connection], Awaitable[None]]
-        ] = None,
-        cb_del_connection: Optional[
-            Callable[[Connection], Awaitable[None]]
-        ] = None,
+        cb_connect: Optional[Callable[[Connection], Awaitable[None]]] = None,
+        cb_disconnect: Optional[Callable[[Connection], Awaitable[None]]] = None,
     ) -> None:
 
         self.connections = {}
 
-        self.cb_add_connection = cb_add_connection
-        self.cb_del_connection = cb_del_connection
+        self.cb_connect = cb_connect
+        self.cb_disconnect = cb_disconnect
 
     @classmethod
     def from_empty(cls) -> "Universe":
@@ -87,9 +83,7 @@ class Universe:
     def systems(self) -> Set[System]:
         return set(chain.from_iterable(self.connections))
 
-    async def add_connection(
-        self, connection: Connection, init: bool = False
-    ) -> None:
+    async def connect(self, connection: Connection, init: bool = False) -> None:
         """Add a connection as long as it doesn't exist."""
 
         key = frozenset([connection.left, connection.right])
@@ -97,12 +91,12 @@ class Universe:
         if key in self.connections:
             raise ConnectionDuplicate()
 
-        if not init and self.cb_add_connection:
-            await self.cb_add_connection(connection)
+        if not init and self.cb_connect:
+            await self.cb_connect(connection)
 
         self.connections[key] = connection
 
-    async def del_connection(
+    async def disconnect(
         self, connection: Connection, init: bool = False
     ) -> None:
         """Delete a connection as long as it exist."""
@@ -128,13 +122,13 @@ class Universe:
 
         for connection in delta.connections_add:
             try:
-                await self.add_connection(connection, init=init)
+                await self.connect(connection, init=init)
             except ConnectionNonexistent:
                 continue
 
         for connection in delta.connections_del:
             try:
-                await self.del_connection(connection, init=init)
+                await self.disconnect(connection, init=init)
             except ConnectionNonexistent:
                 continue
 

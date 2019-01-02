@@ -45,7 +45,7 @@ class Map:
             state = State()
             state.end_of_life = bool(connection.get("eol", 0))
 
-            await universe.add_connection(
+            await universe.connect(
                 Connection(
                     System(connection["from_system_id"]),
                     System(connection["to_system_id"]),

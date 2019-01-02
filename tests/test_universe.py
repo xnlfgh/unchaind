@@ -18,7 +18,7 @@ class UniverseTest(unittest.TestCase):
 
         conn1 = unchaind_universe.Connection(system1, system2, state)
 
-        loop.run_until_complete(universe.add_connection(conn1))
+        loop.run_until_complete(universe.connect(conn1))
 
         self.assertEqual(len(universe.systems), 2)
 
@@ -26,7 +26,7 @@ class UniverseTest(unittest.TestCase):
 
         conn2 = unchaind_universe.Connection(system1, system3, state)
 
-        loop.run_until_complete(universe.add_connection(conn2))
+        loop.run_until_complete(universe.connect(conn2))
 
         self.assertEqual(len(universe.systems), 3)
 
@@ -42,8 +42,8 @@ class UniverseTest(unittest.TestCase):
         conn2 = unchaind_universe.Connection(system1, system2, state)
 
         with self.assertRaises(unchaind_exception.ConnectionDuplicate):
-            loop.run_until_complete(universe.add_connection(conn1))
-            loop.run_until_complete(universe.add_connection(conn2))
+            loop.run_until_complete(universe.connect(conn1))
+            loop.run_until_complete(universe.connect(conn2))
 
         self.assertEqual(len(universe.systems), 2)
 
@@ -61,9 +61,9 @@ class UniverseTest(unittest.TestCase):
         conn2 = unchaind_universe.Connection(system1, system3, state)
         conn3 = unchaind_universe.Connection(system2, system3, state)
 
-        loop.run_until_complete(universe1.add_connection(conn1))
-        loop.run_until_complete(universe1.add_connection(conn2))
-        loop.run_until_complete(universe1.add_connection(conn3))
+        loop.run_until_complete(universe1.connect(conn1))
+        loop.run_until_complete(universe1.connect(conn2))
+        loop.run_until_complete(universe1.connect(conn3))
 
         self.assertEqual(len(universe1.systems), 3)
 
@@ -91,9 +91,9 @@ class UniverseTest(unittest.TestCase):
         conn2 = unchaind_universe.Connection(system1, system3, state)
         conn3 = unchaind_universe.Connection(system2, system3, state)
 
-        loop.run_until_complete(universe1.add_connection(conn1))
-        loop.run_until_complete(universe1.add_connection(conn2))
-        loop.run_until_complete(universe1.add_connection(conn3))
+        loop.run_until_complete(universe1.connect(conn1))
+        loop.run_until_complete(universe1.connect(conn2))
+        loop.run_until_complete(universe1.connect(conn3))
 
         self.assertEqual(len(universe1.systems), 3)
         self.assertEqual(len(universe2.systems), 0)
