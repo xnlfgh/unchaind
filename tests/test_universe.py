@@ -9,7 +9,9 @@ loop = asyncio.get_event_loop()
 
 class UniverseTest(unittest.TestCase):
     def test_universe_connection_add(self) -> None:
-        universe = unchaind_universe.Universe.from_empty()
+        universe = loop.run_until_complete(
+            unchaind_universe.Universe.from_empty()
+        )
 
         state = unchaind_universe.State()
 
@@ -31,7 +33,9 @@ class UniverseTest(unittest.TestCase):
         self.assertEqual(len(universe.systems), 3)
 
     def test_universe_double_connection_add(self) -> None:
-        universe = unchaind_universe.Universe.from_empty()
+        universe = loop.run_until_complete(
+            unchaind_universe.Universe.from_empty()
+        )
 
         state = unchaind_universe.State()
 
@@ -48,8 +52,12 @@ class UniverseTest(unittest.TestCase):
         self.assertEqual(len(universe.systems), 2)
 
     def test_delta(self) -> None:
-        universe1 = unchaind_universe.Universe.from_empty()
-        universe2 = unchaind_universe.Universe.from_empty()
+        universe1 = loop.run_until_complete(
+            unchaind_universe.Universe.from_empty()
+        )
+        universe2 = loop.run_until_complete(
+            unchaind_universe.Universe.from_empty()
+        )
 
         state = unchaind_universe.State()
 
@@ -78,8 +86,12 @@ class UniverseTest(unittest.TestCase):
         self.assertEqual(len(delta2.connections_del), 0)
 
     def test_universe_update_with(self) -> None:
-        universe1 = unchaind_universe.Universe.from_empty()
-        universe2 = unchaind_universe.Universe.from_empty()
+        universe1 = loop.run_until_complete(
+            unchaind_universe.Universe.from_empty()
+        )
+        universe2 = loop.run_until_complete(
+            unchaind_universe.Universe.from_empty()
+        )
 
         state = unchaind_universe.State()
 

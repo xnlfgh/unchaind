@@ -1,10 +1,11 @@
 """Classes and types describing our Universe and the parts it consists of."""
 
-from typing import Dict, Optional, Set, Callable, Awaitable, FrozenSet
+from typing import Dict, Optional, Set, Callable, Awaitable, FrozenSet, List
 from itertools import chain
 
+import unchaind.static as static
+
 from unchaind.exception import ConnectionDuplicate, ConnectionNonexistent
-from unchaind.static import systems
 
 
 class State:
@@ -35,6 +36,9 @@ class Connection:
         self.right = right
         self.state = state
 
+    def __repr__(self) -> str:
+        return f"Connection(left={self.left!r},right={self.right!r})"
+
 
 class System(object):
     """Represents a system from its identifier and name, can have a list of
@@ -44,7 +48,7 @@ class System(object):
 
     def __init__(self, identifier: int) -> None:
         self.identifier = identifier
-        self.name = systems[identifier]
+        self.name = static.systems[identifier]
 
     def __hash__(self) -> int:
         """The identity of a System uses its identifier for uniqueness."""
@@ -54,7 +58,7 @@ class System(object):
         return bool(self.identifier == other.identifier)
 
     def __repr__(self) -> str:
-        return f"System(identifier={self.identifier!r})"
+        return f"System(identifier={self.identifier!r},name={self.name!r})"
 
 
 class Universe:
@@ -75,9 +79,25 @@ class Universe:
         self.cb_disconnect = cb_disconnect
 
     @classmethod
-    def from_empty(cls) -> "Universe":
+    async def from_empty(cls) -> "Universe":
         """Create an empty universe ready to be populated."""
         return cls()
+
+    @classmethod
+    async def from_eve(cls) -> "Universe":
+        """Create a universe from EVE."""
+        instance = cls()
+
+        for left, rights in static.connections.items():
+            for right in rights:
+                state = State()
+                state.stargate = True
+
+                await instance.connect(
+                    Connection(System(left), System(right), state), init=True
+                )
+
+        return instance
 
     @property
     def systems(self) -> Set[System]:
@@ -131,6 +151,39 @@ class Universe:
                 await self.disconnect(connection, init=init)
             except ConnectionNonexistent:
                 continue
+
+    @property
+    def graph(self) -> Dict[System, List[System]]:
+        """Return a flattened representation of only the systems and their
+           directly connected systems."""
+
+        flat: Dict[System, List[System]] = {}
+
+        # First pass
+        for key, connection in self.connections.items():
+            a, b = key
+
+            flat[a] = flat.get(a, []) + [connection.left, connection.right]
+            flat[b] = flat.get(b, []) + [connection.left, connection.right]
+
+            flat[a].remove(a)
+            flat[b].remove(b)
+
+        return flat
+
+
+class Multiverse(Universe):
+    """Add multiple universes together into a single multiverse."""
+
+    @classmethod
+    async def from_universes(cls, *universes: Universe) -> "Multiverse":
+        instance = cls()
+
+        for universe in universes:
+            for connection in universe.connections.values():
+                await instance.connect(connection, init=True)
+
+        return instance
 
 
 class Delta:
