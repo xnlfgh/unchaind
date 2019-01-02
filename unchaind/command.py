@@ -175,7 +175,7 @@ class Command:
     "--log-file",
     "-l",
     type=click.Path(exists=False),
-    help="Logfile to log to. Normally `unchaind` logs to stdout.",
+    help="Logfile to log to. Normally `unchaind` logs to stderr.",
 )
 def main(config: str, verbosity: int, log_file: Optional[str]) -> None:
     """This is the ``unchaind`` EVE online tool. It allows for interactivity
