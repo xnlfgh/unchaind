@@ -2,7 +2,6 @@ import os
 
 from typing import Dict, List
 
-
 def load_systems() -> Dict[int, str]:
     systems: Dict[int, str] = {}
 
@@ -10,11 +9,21 @@ def load_systems() -> Dict[int, str]:
         os.path.join(os.path.dirname(__file__), "data", "system.txt")
     ) as f:
         for line in f:
-            a, b = line.strip().split("|")
+            a, b, _ = line.strip().split("|")
 
             systems[int(a)] = b
 
-    return systems
+
+def load_truesec() -> Dict[int, float]:
+    truesec: Dict[int, float] = {}
+
+    with open(os.path.join(os.path.dirname(__file__), "data", "system.txt")) as f:
+        for line in f:
+        a, _, c = line.strip().split("|")
+
+        truesec[int(a)] = float(c)
+
+    return truesec
 
 
 def load_connections() -> Dict[int, List[int]]:
@@ -38,4 +47,5 @@ def load_connections() -> Dict[int, List[int]]:
 
 
 systems: Dict[int, str] = load_systems()
+system_truesec: Dict[int, float] = load_truesec()
 connections: Dict[int, List[int]] = load_connections()
