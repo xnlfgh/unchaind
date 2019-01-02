@@ -139,6 +139,5 @@ class Transport:
         try:
             return dict(json.loads(update_response.body.decode("utf8")))
         except (ValueError, AttributeError, json.decoder.JSONDecodeError):
-            # XXX we probably want to do something fancy here
-            log.warning("login: received invalid json from Siggy")
-            raise ValueError()  # Fix this
+            log.critical("login: failed to login to Siggy")
+            raise SystemExit(1)
