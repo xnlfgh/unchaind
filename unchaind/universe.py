@@ -4,6 +4,7 @@ from typing import Dict, Optional, Set, Callable, Awaitable, FrozenSet
 from itertools import chain
 
 from unchaind.exception import ConnectionDuplicate, ConnectionNonexistent
+from unchaind.static import systems
 
 
 class State:
@@ -40,11 +41,10 @@ class System(object):
        of connections and belongs to a Universe."""
 
     identifier: int
-    _name: Optional[str]
 
     def __init__(self, identifier: int) -> None:
         self.identifier = identifier
-        self._name = None
+        self.name = systems[identifier]
 
     def __hash__(self) -> int:
         """The identity of a System uses its identifier for uniqueness."""

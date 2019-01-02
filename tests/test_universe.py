@@ -13,8 +13,8 @@ class UniverseTest(unittest.TestCase):
 
         state = unchaind_universe.State()
 
-        system1 = unchaind_universe.System(1)
-        system2 = unchaind_universe.System(2)
+        system1 = unchaind_universe.System(30_000_492)
+        system2 = unchaind_universe.System(30_000_493)
 
         conn1 = unchaind_universe.Connection(system1, system2, state)
 
@@ -22,7 +22,7 @@ class UniverseTest(unittest.TestCase):
 
         self.assertEqual(len(universe.systems), 2)
 
-        system3 = unchaind_universe.System(3)
+        system3 = unchaind_universe.System(30_000_494)
 
         conn2 = unchaind_universe.Connection(system1, system3, state)
 
@@ -35,8 +35,8 @@ class UniverseTest(unittest.TestCase):
 
         state = unchaind_universe.State()
 
-        system1 = unchaind_universe.System(1)
-        system2 = unchaind_universe.System(2)
+        system1 = unchaind_universe.System(30_000_492)
+        system2 = unchaind_universe.System(30_000_493)
 
         conn1 = unchaind_universe.Connection(system1, system2, state)
         conn2 = unchaind_universe.Connection(system1, system2, state)
@@ -53,9 +53,9 @@ class UniverseTest(unittest.TestCase):
 
         state = unchaind_universe.State()
 
-        system1 = unchaind_universe.System(1)
-        system2 = unchaind_universe.System(2)
-        system3 = unchaind_universe.System(3)
+        system1 = unchaind_universe.System(30_000_492)
+        system2 = unchaind_universe.System(30_000_493)
+        system3 = unchaind_universe.System(30_000_494)
 
         conn1 = unchaind_universe.Connection(system1, system2, state)
         conn2 = unchaind_universe.Connection(system1, system3, state)
@@ -83,9 +83,9 @@ class UniverseTest(unittest.TestCase):
 
         state = unchaind_universe.State()
 
-        system1 = unchaind_universe.System(1)
-        system2 = unchaind_universe.System(2)
-        system3 = unchaind_universe.System(3)
+        system1 = unchaind_universe.System(30_000_492)
+        system2 = unchaind_universe.System(30_000_493)
+        system3 = unchaind_universe.System(30_000_494)
 
         conn1 = unchaind_universe.Connection(system1, system2, state)
         conn2 = unchaind_universe.Connection(system1, system3, state)
@@ -102,3 +102,11 @@ class UniverseTest(unittest.TestCase):
 
         self.assertEqual(len(universe1.systems), 3)
         self.assertEqual(len(universe2.systems), 3)
+
+    def test_universe_system_name(self) -> None:
+        system1 = unchaind_universe.System(30_000_492)
+
+        self.assertEqual(system1.name, "O3-4MN")
+
+        with self.assertRaises(KeyError):
+            unchaind_universe.System(1)

@@ -9,7 +9,6 @@ from asyncio import gather
 from unchaind.http import HTTPSession
 from unchaind.universe import System, Universe
 from unchaind.sink import sinks
-from unchaind.util import system_name
 
 
 log = logging.getLogger(__name__)
@@ -84,9 +83,7 @@ async def _filter_location(
     if "wspace" in values:
         # XXX do this mapping based on system id so this lookup doesn't need
         # XXX to happen for every kill
-        solar_system_name = await system_name(solar_system)
-
-        if re.match(r"J\d{6}", solar_system_name):
+        if re.match(r"J\d{6}", solar_system.name):
             return False
         else:
             log.debug(
