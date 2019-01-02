@@ -29,7 +29,7 @@ class UniverseTest(unittest.TestCase):
         if path1 is None:
             raise AssertionError
 
-        self.assertEqual(len(path1.path), 9)
+        self.assertEqual(len(path1.path), 10)
 
     def test_path__path__wormhole_path(self) -> None:
         universe1 = loop.run_until_complete(
@@ -61,4 +61,4 @@ class UniverseTest(unittest.TestCase):
         if path1 is None:
             raise AssertionError
 
-        self.assertEqual(len(path1.path), 1)
+        self.assertEqual(len(path1.path), 2)
