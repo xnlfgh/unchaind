@@ -13,12 +13,18 @@ class State:
        same time."""
 
     stargate: bool
+    wormhole: bool
+    jumpgate: bool
+
     critical_mass: bool
     end_of_life: bool
     frigate_sized: bool
 
     def __init__(self) -> None:
         self.stargate = False
+        self.wormhole = False
+        self.jumpgate = False
+
         self.critical_mass = False
         self.frigate_sized = False
         self.end_of_life = False
@@ -38,6 +44,17 @@ class Connection:
 
     def __repr__(self) -> str:
         return f"Connection(left={self.left!r},right={self.right!r})"
+
+    @property
+    def type(self) -> str:
+        if self.state.stargate:
+            return "stargate"
+        elif self.state.jumpgate:
+            return "jumpgate"
+        elif self.state.wormhole:
+            return "wormhole"
+
+        return ""
 
 
 class System(object):
