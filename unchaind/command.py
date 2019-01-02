@@ -28,7 +28,7 @@ async def universe_cleanup(universe: Universe) -> Universe:
     # filtered destination
     await gather(
         *[
-            universe.del_connection(universe.connections[c])
+            universe.disconnect(universe.connections[c])
             for c in universe.connections
             if any(s.identifier == 30_000_362 for s in c)
         ]
@@ -45,13 +45,14 @@ class Command:
     mappers: List[SiggyMap]
 
     def __init__(self, config: Dict[str, Any]) -> None:
-        self.universe = Universe.from_empty()
-        self.mappers = []
         self.config = config
 
     async def initialize(self) -> None:
         """Start by initializing all our mappers and setting them up with
            their login credentials."""
+
+        self.universe = await Universe.from_empty()
+        self.mappers = []
 
         if "mappers" in self.config and len(self.config["mappers"]):
             log.info(

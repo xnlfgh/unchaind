@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 
 from lxml import etree
 
-from unchaind.universe import Universe, System, Connection, State
+from unchaind.universe import Universe, System, Connection, State, Optional
 from unchaind.http import HTTPSession
 
 
@@ -24,18 +24,21 @@ log = logging.getLogger(__name__)
 class Map:
     """Uses the Transport to read data from Siggy into a universe."""
 
-    universe: Universe
+    universe: Optional[Universe]
 
     def __init__(self, transport: "Transport") -> None:
         self.transport = transport
-        self.universe = Universe.from_empty()
+        self.universe = None
 
     async def update(self) -> Universe:
         """Update our internal Universe with a new Universe."""
 
         data = await self.transport.update()
 
-        universe: Universe = Universe.from_empty()
+        if self.universe is None:
+            self.universe: Universe = await Universe.from_empty()
+
+        universe: Universe = await Universe.from_empty()
 
         chain = data["chainMap"]
 
@@ -56,10 +59,6 @@ class Map:
         self.universe = universe
 
         return self.universe
-
-    def reset(self) -> None:
-        """Reset our internal universe."""
-        self.universe = Universe.from_empty()
 
 
 class Transport:
