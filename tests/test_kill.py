@@ -2,7 +2,7 @@ import unittest
 import asyncio
 
 from unchaind import universe as unchaind_universe
-from unchaind import kills as unchaind_kills
+from unchaind import kill as unchaind_kill
 
 loop = asyncio.get_event_loop()
 
@@ -21,7 +21,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_alliance([1], package, universe)
+                unchaind_kill._filter_alliance([1], package, universe)
             ),
             True,
         )
@@ -39,7 +39,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_alliance([1], package, universe)
+                unchaind_kill._filter_alliance([1], package, universe)
             ),
             False,
         )
@@ -57,7 +57,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_alliance([1], package, universe)
+                unchaind_kill._filter_alliance([1], package, universe)
             ),
             False,
         )
@@ -75,7 +75,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_alliance_kill([1], package, universe)
+                unchaind_kill._filter_alliance_kill([1], package, universe)
             ),
             True,
         )
@@ -93,7 +93,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_alliance_kill([1], package, universe)
+                unchaind_kill._filter_alliance_kill([1], package, universe)
             ),
             True,
         )
@@ -111,7 +111,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_alliance_kill([1], package, universe)
+                unchaind_kill._filter_alliance_kill([1], package, universe)
             ),
             False,
         )
@@ -129,7 +129,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_alliance_loss([1], package, universe)
+                unchaind_kill._filter_alliance_loss([1], package, universe)
             ),
             True,
         )
@@ -147,7 +147,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_alliance_loss([1], package, universe)
+                unchaind_kill._filter_alliance_loss([1], package, universe)
             ),
             False,
         )
@@ -165,7 +165,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_alliance_loss([1], package, universe)
+                unchaind_kill._filter_alliance_loss([1], package, universe)
             ),
             True,
         )
@@ -183,7 +183,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_corporation([1], package, universe)
+                unchaind_kill._filter_corporation([1], package, universe)
             ),
             True,
         )
@@ -201,7 +201,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_corporation([1], package, universe)
+                unchaind_kill._filter_corporation([1], package, universe)
             ),
             False,
         )
@@ -219,7 +219,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_corporation([1], package, universe)
+                unchaind_kill._filter_corporation([1], package, universe)
             ),
             False,
         )
@@ -237,7 +237,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_corporation_kill([1], package, universe)
+                unchaind_kill._filter_corporation_kill([1], package, universe)
             ),
             True,
         )
@@ -255,7 +255,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_corporation_kill([1], package, universe)
+                unchaind_kill._filter_corporation_kill([1], package, universe)
             ),
             True,
         )
@@ -273,7 +273,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_corporation_kill([1], package, universe)
+                unchaind_kill._filter_corporation_kill([1], package, universe)
             ),
             False,
         )
@@ -291,7 +291,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_corporation_loss([1], package, universe)
+                unchaind_kill._filter_corporation_loss([1], package, universe)
             ),
             True,
         )
@@ -309,7 +309,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_corporation_loss([1], package, universe)
+                unchaind_kill._filter_corporation_loss([1], package, universe)
             ),
             False,
         )
@@ -327,7 +327,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_corporation_loss([1], package, universe)
+                unchaind_kill._filter_corporation_loss([1], package, universe)
             ),
             True,
         )
@@ -345,7 +345,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_character([1], package, universe)
+                unchaind_kill._filter_character([1], package, universe)
             ),
             True,
         )
@@ -363,7 +363,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_character([1], package, universe)
+                unchaind_kill._filter_character([1], package, universe)
             ),
             False,
         )
@@ -381,7 +381,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_character([1], package, universe)
+                unchaind_kill._filter_character([1], package, universe)
             ),
             False,
         )
@@ -399,7 +399,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_character_kill([1], package, universe)
+                unchaind_kill._filter_character_kill([1], package, universe)
             ),
             True,
         )
@@ -417,7 +417,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_character_kill([1], package, universe)
+                unchaind_kill._filter_character_kill([1], package, universe)
             ),
             True,
         )
@@ -435,7 +435,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_character_kill([1], package, universe)
+                unchaind_kill._filter_character_kill([1], package, universe)
             ),
             False,
         )
@@ -453,7 +453,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_character_loss([1], package, universe)
+                unchaind_kill._filter_character_loss([1], package, universe)
             ),
             True,
         )
@@ -471,7 +471,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_character_loss([1], package, universe)
+                unchaind_kill._filter_character_loss([1], package, universe)
             ),
             False,
         )
@@ -489,7 +489,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_character_loss([1], package, universe)
+                unchaind_kill._filter_character_loss([1], package, universe)
             ),
             True,
         )
@@ -508,7 +508,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_minimum_value(
+                unchaind_kill._filter_minimum_value(
                     [1_000_000], package, universe
                 )
             ),
@@ -529,7 +529,7 @@ class NotifierKillTest(unittest.TestCase):
 
         self.assertEqual(
             loop.run_until_complete(
-                unchaind_kills._filter_minimum_value(
+                unchaind_kill._filter_minimum_value(
                     [100_000], package, universe
                 )
             ),

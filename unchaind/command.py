@@ -11,7 +11,7 @@ from tornado import ioloop
 from unchaind.mapper.siggy import Map as SiggyMap
 
 from unchaind.universe import Universe
-from unchaind.kills import loop as loop_kills
+from unchaind.kill import loop as loop_kills
 from unchaind.util import get_mapper, get_transport
 from unchaind.log import setup_log
 from unchaind.config import parse_config
