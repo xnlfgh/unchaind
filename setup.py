@@ -12,7 +12,9 @@ setup(
     install_requires=["tornado", "lxml", "click"],
     tests_require=["pytest", "pytest-cov"],
     entry_points={"console_scripts": ["unchaind=unchaind.command:main"]},
-    extras_require={"dev": ["pre-commit", "flake8", "black"]},
+    extras_require={
+        "dev": ["pre-commit", "flake8", "black", "pytest", "pytest-cov"]
+    },
     package_data={"unchaind": ["unchaind/data"]},
     include_package_data=True,
 )
