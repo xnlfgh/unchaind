@@ -31,8 +31,7 @@ post them to a Discord webhook.::
 
   [[mappers]]
       type = "siggy"
-  
-      [[mappers.credentials]]
+      [mappers.credentials]
           username = "bla"
           password = "bla"
           home_system = 31002238
@@ -40,31 +39,29 @@ post them to a Discord webhook.::
   [[notifiers]]
       type = "slack"
       webhook = "hook_url"
-      subscribes_to = ["kill"]
+      subscribes_to = "kill"
   
-      [[notifiers.filter]]
-          [[notifiers.filter.require_all_of]]
+      [notifiers.filter]
+          [notifiers.filter.require_all_of]
               location = ["chain"]
-          [[notifiers.filter.exclude_if_any]]
+          [notifiers.filter.exclude_if_any]
               alliance_loss = [99999999]
-              location = [30000142, 30002187]
+              location = [30000142, 30002187]  # Jita/Amarr
   
   [[notifiers]]
       type = "discord"
       webhook = "hook_url"
-      subscribes_to = ["kill"]
+      subscribes_to = "kill"
   
-      [[notifiers.filter]]
-          [[notifiers.filter.require_all_of]]
+      [notifiers.filter]
+          [notifiers.filter.require_all_of]
               alliance = [99999999]
               minimum_value = [500000000]
-          [[notifiers.filter.exclude_if_any]]
+          [notifiers.filter.exclude_if_any]
               alliance_loss = [99999998]
 
-After saving this in ``config.json`` you can then run
-``unchaind -c config.json`` to get going. This will start posting all kills
-as retrieved from zkillboard which have the alliance 99005065 or Hard Knocks
-Inc. as either the attacker or victim.
+After saving this in ``config.toml`` you can then run
+``unchaind -c config.toml`` to get going.
 
 You can read more about available filters in our documentation but you can
 filter on alliance, corporation, location (regions, your siggy chain, systems),
