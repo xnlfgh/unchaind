@@ -10,8 +10,9 @@ def load_systems() -> Dict[int, str]:
     ) as f:
         for line in f:
             a, b, _ = line.strip().split("|")
-
             systems[int(a)] = b
+
+    return systems
 
 
 def load_truesec() -> Dict[int, float]:
@@ -19,9 +20,8 @@ def load_truesec() -> Dict[int, float]:
 
     with open(os.path.join(os.path.dirname(__file__), "data", "system.txt")) as f:
         for line in f:
-        a, _, c = line.strip().split("|")
-
-        truesec[int(a)] = float(c)
+            a, _, c = line.strip().split("|")
+            truesec[int(a)] = float(c)
 
     return truesec
 
@@ -47,5 +47,5 @@ def load_connections() -> Dict[int, List[int]]:
 
 
 systems: Dict[int, str] = load_systems()
-system_truesec: Dict[int, float] = load_truesec()
+truesec: Dict[int, float] = load_truesec()
 connections: Dict[int, List[int]] = load_connections()
