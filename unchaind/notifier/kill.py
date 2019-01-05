@@ -24,12 +24,8 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
         url="https://redisq.zkillboard.com/listen.php", method="GET"
     )
 
-    if response.status_code != 200:
-        log.warning(
-            "loop: received response code %s, content %s",
-            response.status_code,
-            response.content,
-        )
+    if response.code != 200:
+        log.warning("loop: received response code %s", response.status_code)
     # responses sometimes lack .body but they always have .content
 
     try:

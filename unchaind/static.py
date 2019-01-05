@@ -2,6 +2,7 @@ import os
 
 from typing import Dict, List
 
+
 def load_systems() -> Dict[int, str]:
     systems: Dict[int, str] = {}
 
@@ -18,7 +19,9 @@ def load_systems() -> Dict[int, str]:
 def load_truesec() -> Dict[int, float]:
     truesec: Dict[int, float] = {}
 
-    with open(os.path.join(os.path.dirname(__file__), "data", "system.txt")) as f:
+    with open(
+        os.path.join(os.path.dirname(__file__), "data", "system.txt")
+    ) as f:
         for line in f:
             a, _, c = line.strip().split("|")
             truesec[int(a)] = float(c)
