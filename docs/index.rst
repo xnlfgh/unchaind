@@ -17,4 +17,7 @@ be used as a generic killbot which can filter kills in many ways.
    :caption: Contents:
 
    configuration
+   notifiers
+   mappers
+   events
    development
