@@ -2,9 +2,11 @@
 import logging
 import json
 import re
+import os
 
 from typing import Dict, Any, List
 from asyncio import gather
+from itertools import chain
 
 from unchaind.http import HTTPSession
 from unchaind.universe import System, Universe
@@ -65,272 +67,113 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
     await gather(*[sinks[match["type"]](match, message) for match in matches])
 
 
-async def _filter_location(
-    values: List[Any], package: Dict[str, Any], universe: Universe
+async def _match_location(
+    value: str, package: Dict[str, Any], universe: Universe
 ) -> bool:
     killmail = package["killmail"]
     solar_system = System(killmail.get("solar_system_id", None))
 
-    if "chain" in values:
-        if solar_system in universe.systems:
-            return False
-        else:
-            log.debug(
-                "_filter_location: %s was filtered due to not being in chain",
-                killmail["killmail_id"],
-            )
+    if value == "chain":
+        return solar_system in universe.systems
 
-    if "wspace" in values:
-        # XXX do this mapping based on system id so this lookup doesn't need
-        # XXX to happen for every kill
-        if re.match(r"J\d{6}", solar_system.name):
-            return False
-        else:
-            log.debug(
-                "_filter_location: %s was filtered due to not being in wspace",
-                killmail["killmail_id"],
-            )
+    if value == "wspace":
+        return re.match(r"J\d{6}", solar_system.name)
 
-    if solar_system.identifier in values:
-        log.debug(
-            "_filter_location: %s: found %s in %s",
-            killmail["killmail_id"],
-            str(solar_system),
-            repr(values),
-        )
-        return False
-
-    return True
+    return value.lower() == solar_system.name.lower()
 
 
-async def _filter_alliance(
-    values: List[int], package: Dict[str, Any], universe: Universe
+async def _match_alliance(
+    value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
-    """For the alliance filter the victim or any of the attackers have to be
-       in the list of alliances."""
-
-    loss = await _filter_alliance_loss(values, package, universe)
-
-    if not loss:
-        return False
-
-    kill = await _filter_alliance_kill(values, package, universe)
-
-    if not kill:
-        return False
-
-    return True
+    return await _match_alliance_loss(
+        value, package, universe
+    ) or await _match_alliance_kill(value, package, universe)
 
 
-async def _filter_alliance_kill(
-    values: List[int], package: Dict[str, Any], universe: Universe
+async def _match_alliance_kill(
+    value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
-    """For the alliance filter the victim or any of the attackers have to be
-       in the list of alliances."""
-
     killmail = package["killmail"]
-
     attackers = killmail.get("attackers", [])
-
-    for value in values:
-        if any(a.get("alliance_id", None) == value for a in attackers):
-            return False
-
-    log.debug(
-        "_filter_alliance_kill: %s was filtered due to no alliance in %s",
-        killmail["killmail_id"],
-        values,
-    )
-
-    return True
+    return any(a.get("alliance_id", None) == value for a in attackers)
 
 
-async def _filter_alliance_loss(
-    values: List[int], package: Dict[str, Any], universe: Universe
+async def _match_alliance_loss(
+    value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
-    """For the alliance filter the victim or any of the attackers have to be
-       in the list of alliances."""
-
     killmail = package["killmail"]
-
     victim = killmail.get("victim", {})
-
-    for value in values:
-        if victim.get("alliance_id", None) == value:
-            return False
-
-    log.debug(
-        "_filter_alliance_loss: %s was filtered due to no alliance in %s",
-        killmail["killmail_id"],
-        values,
-    )
-
-    return True
+    return killmail["victim"]["alliance_id"] == value
 
 
-async def _filter_corporation(
-    values: List[int], package: Dict[str, Any], universe: Universe
+async def _match_corporation(
+    value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
-    """For the corporation filter the victim or any of the attackers have to be
-       in the list of corporations."""
-
-    loss = await _filter_corporation_loss(values, package, universe)
-
-    if not loss:
-        return False
-
-    kill = await _filter_corporation_kill(values, package, universe)
-
-    if not kill:
-        return False
-
-    return True
+    return await _match_corporation_loss(
+        value, package, universe
+    ) or await _match_corporation_kill(value, package, universe)
 
 
-async def _filter_corporation_kill(
-    values: List[int], package: Dict[str, Any], universe: Universe
+async def _match_corporation_kill(
+    value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
-    """For the corporation filter the victim or any of the attackers have to be
-       in the list of corporations."""
-
     killmail = package["killmail"]
-
     attackers = killmail.get("attackers", [])
-
-    for value in values:
-        if any(a.get("corporation_id", None) == value for a in attackers):
-            return False
-
-    log.debug(
-        "_filter_corporation_kill: %s was filtered due to no corporation in %s",
-        killmail["killmail_id"],
-        values,
-    )
-
-    return True
+    return any(c.get("corporation_id", None) == value for c in attackers)
 
 
-async def _filter_corporation_loss(
-    values: List[int], package: Dict[str, Any], universe: Universe
+async def _match_corporation_loss(
+    value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
-    """For the corporation filter the victim or any of the attackers have to be
-       in the list of corporations."""
-
     killmail = package["killmail"]
-
     victim = killmail.get("victim", {})
-
-    for value in values:
-        if victim.get("corporation_id", None) == value:
-            return False
-
-    log.debug(
-        "_filter_corporation_loss: %s was filtered due to no corporation in %s",
-        killmail["killmail_id"],
-        values,
-    )
-
-    return True
+    return killmail["victim"]["corporation_id"] == value
 
 
-async def _filter_character(
-    values: List[int], package: Dict[str, Any], universe: Universe
+async def _match_character(
+    value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
-    """For the character filter the victim or any of the attackers have to be
-       in the list of characters."""
-
-    loss = await _filter_character_loss(values, package, universe)
-
-    if not loss:
-        return False
-
-    kill = await _filter_character_kill(values, package, universe)
-
-    if not kill:
-        return False
-
-    return True
+    return await _match_character_loss(
+        value, package, universe
+    ) or await _match_character_kill(value, package, universe)
 
 
-async def _filter_character_kill(
-    values: List[int], package: Dict[str, Any], universe: Universe
+async def _match_character_kill(
+    value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
-    """For the character filter the victim or any of the attackers have to be
-       in the list of characters."""
-
     killmail = package["killmail"]
-
     attackers = killmail.get("attackers", [])
-
-    for value in values:
-        if any(a.get("character_id", None) == value for a in attackers):
-            return False
-
-    log.debug(
-        "_filter_character_kill: %s was filtered due to no character in %s",
-        killmail["killmail_id"],
-        values,
-    )
-
-    return True
+    return any(c.get("character_id", None) == value for c in attackers)
 
 
-async def _filter_character_loss(
-    values: List[int], package: Dict[str, Any], universe: Universe
+async def _match_character_loss(
+    value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
-    """For the character filter the victim or any of the attackers have to be
-       in the list of characters."""
-
     killmail = package["killmail"]
-
     victim = killmail.get("victim", {})
-
-    for value in values:
-        if victim.get("character_id", None) == value:
-            return False
-
-    log.debug(
-        "_filter_character_loss: %s was filtered due to no character in %s",
-        killmail["killmail_id"],
-        values,
-    )
-
-    return True
+    return killmail["victim"]["character_id"] == value
 
 
-async def _filter_minimum_value(
-    values: List[int], package: Dict[str, Any], universe: Universe
+async def _match_minimum_value(
+    value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
-    """Filter kills that are not of at least a minimum value."""
-
     kill_value = package["zkb"]["totalValue"]
-    minimum = values[0]
-
-    rv = minimum > kill_value
-    if rv:
-        log.debug(
-            "_filter_minimum_value: %s was filtered due to value less than threshold (%s < %s)",
-            package["killmail"]["killmail_id"],
-            kill_value,
-            minimum,
-        )
-
-    return bool(minimum > kill_value)
+    return bool(kill_value >= value)
 
 
 # I gave up on trying to type this properly...
-filters: Dict[str, Any] = {
-    "location": _filter_location,
-    "alliance": _filter_alliance,
-    "character": _filter_character,
-    "alliance_kill": _filter_alliance_kill,
-    "alliance_loss": _filter_alliance_loss,
-    "corporation": _filter_corporation,
-    "corporation_kill": _filter_corporation_kill,
-    "corporation_loss": _filter_corporation_loss,
-    "character_kill": _filter_character_kill,
-    "character_loss": _filter_character_loss,
-    "minimum_value": _filter_minimum_value,
+matchers: Dict[str, Any] = {
+    "location": _match_location,
+    "alliance": _match_alliance,
+    "character": _match_character,
+    "alliance_kill": _match_alliance_kill,
+    "alliance_loss": _match_alliance_loss,
+    "corporation": _match_corporation,
+    "corporation_kill": _match_corporation_kill,
+    "corporation_loss": _match_corporation_loss,
+    "character_kill": _match_character_kill,
+    "character_loss": _match_character_loss,
+    "minimum_value": _match_minimum_value,
 }
 
 
@@ -343,35 +186,60 @@ async def match_killmail(
 
     matches = []
 
+    killmail_id = package["killmail"]["killmail_id"]
+
     # Now let's see if any kill notifiers' filters match
-    for notifier in config["notifiers"]:
+    for index, notifier in enumerate(config["notifiers"]):
+        log.debug(
+            "considering killmail id %s for notifier %s", killmail_id, index
+        )
         if notifier["subscribes_to"] != "kill":
+            log.debug(
+                "notifier %s does not subscribe to kills; skipping", index
+            )
             continue
 
-        # This reads a bit difficult but this checks if all filters for this
-        # notifier were False. If they were then that notifier would like to
-        # receive this kill!
-        require_all_of_results = await gather(
-            *[
-                filters[name](values, package, universe)
-                for name, values in notifier["filter"]
-                .get("require_all_of", {})
-                .items()
-            ]
-        )
+        async def apply_matchers(section: str) -> List[bool]:
+            rv = []
+            for d in notifier["filter"].get(section, []):
+                for name, value in d.items():
+                    filter_result = await matchers[name](
+                        value, package, universe
+                    )
+                    log.debug(
+                        "notifier %s killmail %s: %s: considered %s(%s) --> %s",
+                        index,
+                        killmail_id,
+                        section,
+                        name,
+                        value,
+                        filter_result,
+                    )
+                    rv.append(filter_result)
+            return rv
 
-        exclude_if_any_results = await gather(
-            *[
-                filters[name](values, package, universe)
-                for name, values in notifier["filter"]
-                .get("exclude_if_any", {})
-                .items()
-            ]
-        )
+        sections = {
+            "require_all_of": all,
+            "require_any_of": any,
+            "exclude_if_any": lambda x: not any,
+            "exclude_if_all": lambda x: not all,
+        }
 
-        # XXX invert the boolean senses of filters, this is horrifying and could be
-        # so much easier to read and reason about.
-        if (not any(require_all_of_results)) and all(exclude_if_any_results):
+        rv = True
+        for section, aggregator in sections.items():
+            section_results = await apply_matchers(section)
+            rv = rv and (
+                len(section_results) == 0 or aggregator(section_results)
+            )
+
+        if rv:
+            log.debug(
+                "notifier %s killmail %s: it's a match!", index, killmail_id
+            )
             matches.append(notifier)
+        else:
+            log.debug(
+                "notifier %s killmail %s: filtered away", index, killmail_id
+            )
 
     return matches
