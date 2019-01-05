@@ -1,11 +1,15 @@
 """Classes and types describing our Universe and the parts it consists of."""
+import logging
 
-from typing import Dict, Optional, Set, Callable, Awaitable, FrozenSet, List
+from typing import Dict, Set, FrozenSet, List
 from itertools import chain
 
 import unchaind.static as static
 
 from unchaind.exception import ConnectionDuplicate, ConnectionNonexistent
+
+
+log = logging.getLogger(__name__)
 
 
 class State:
@@ -87,16 +91,9 @@ class Universe:
 
     connections: Dict[FrozenSet[System], Connection]
 
-    def __init__(
-        self,
-        cb_connect: Optional[Callable[[Connection], Awaitable[None]]] = None,
-        cb_disconnect: Optional[Callable[[Connection], Awaitable[None]]] = None,
-    ) -> None:
+    def __init__(self,) -> None:
 
         self.connections = {}
-
-        self.cb_connect = cb_connect
-        self.cb_disconnect = cb_disconnect
 
     @classmethod
     async def from_empty(cls) -> "Universe":
@@ -114,7 +111,7 @@ class Universe:
                 state.stargate = True
 
                 await instance.connect(
-                    Connection(System(left), System(right), state), init=True
+                    Connection(System(left), System(right), state)
                 )
 
         return instance
@@ -123,7 +120,7 @@ class Universe:
     def systems(self) -> Set[System]:
         return set(chain.from_iterable(self.connections))
 
-    async def connect(self, connection: Connection, init: bool = False) -> None:
+    async def connect(self, connection: Connection) -> None:
         """Add a connection as long as it doesn't exist."""
 
         key = frozenset([connection.left, connection.right])
@@ -131,14 +128,9 @@ class Universe:
         if key in self.connections:
             raise ConnectionDuplicate()
 
-        if not init and self.cb_connect:
-            await self.cb_connect(connection)
-
         self.connections[key] = connection
 
-    async def disconnect(
-        self, connection: Connection, init: bool = False
-    ) -> None:
+    async def disconnect(self, connection: Connection) -> None:
         """Delete a connection as long as it exist."""
 
         key = frozenset([connection.left, connection.right])
@@ -148,9 +140,7 @@ class Universe:
 
         del self.connections[key]
 
-    async def update_with(
-        self, universe: "Universe", init: bool = False
-    ) -> None:
+    async def update_with(self, universe: "Universe") -> None:
         """Adjust this universe based on another universe adding all
            connections and removing those which aren't in the other
            Universe.
@@ -162,13 +152,13 @@ class Universe:
 
         for connection in delta.connections_add:
             try:
-                await self.connect(connection, init=init)
+                await self.connect(connection)
             except ConnectionNonexistent:
                 continue
 
         for connection in delta.connections_del:
             try:
-                await self.disconnect(connection, init=init)
+                await self.disconnect(connection)
             except ConnectionNonexistent:
                 continue
 
@@ -201,7 +191,7 @@ class Multiverse(Universe):
 
         for universe in universes:
             for connection in universe.connections.values():
-                await instance.connect(connection, init=True)
+                await instance.connect(connection)
 
         return instance
 

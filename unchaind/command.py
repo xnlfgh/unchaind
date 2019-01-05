@@ -12,6 +12,7 @@ from unchaind.mapper.siggy import Map as SiggyMap
 
 from unchaind.universe import Universe
 from unchaind.kill import loop as loop_kills
+from unchaind.system import periodic as periodic_systems
 from unchaind.util import get_mapper, get_transport
 from unchaind.log import setup_log
 from unchaind.config import parse_config
@@ -54,6 +55,59 @@ class Command:
         self.universe = await Universe.from_empty()
         self.mappers = []
 
+        loop: ioloop.IOLoop = ioloop.IOLoop.current()
+
+        # Check if any notifiers subscribe to kills
+        if "notifier" in self.config and len(
+            [n for n in self.config["notifier"] if n["subscribes_to"] == "kill"]
+        ):
+            log.info(
+                "initialize: `unchaind` with {} notifier[kill].".format(
+                    len(
+                        [
+                            n
+                            for n in self.config["notifier"]
+                            if n["subscribes_to"] == "kill"
+                        ]
+                    )
+                )
+            )
+
+            loop.add_callback(self.loop_kills)
+        else:
+            log.warning(
+                "initialize: did not find any notifier subscribed to kills"
+            )
+
+        # Check if any notifiers subscribe to systems
+        if "notifier" in self.config and len(
+            [
+                n
+                for n in self.config["notifier"]
+                if n["subscribes_to"] == "system"
+            ]
+        ):
+            log.info(
+                "initialize: `unchaind` with {} notifier[system].".format(
+                    len(
+                        [
+                            n
+                            for n in self.config["notifier"]
+                            if n["subscribes_to"] == "system"
+                        ]
+                    )
+                )
+            )
+
+            poll_systems: ioloop.PeriodicCallback = ioloop.PeriodicCallback(
+                self.periodic_systems, 5000
+            )
+            poll_systems.start()
+        else:
+            log.warning(
+                "initialize: did not find any notifier subscribed to systems"
+            )
+
         if "mapper" in self.config and len(self.config["mapper"]):
             log.info(
                 "initialize: `unchaind` with {} mappers.".format(
@@ -72,7 +126,7 @@ class Command:
 
             # Run our initial pass to get all the results without firing their
             # callbacks since we're booting
-            await self.periodic_mappers(init=False)
+            await self.periodic_mappers()
 
             log.info(
                 "initialize: mappers finished, got {} systems and {} connections.".format(
@@ -85,29 +139,6 @@ class Command:
                 self.periodic_mappers, 5000
             )
             poll_mappers.start()
-
-        # Check if any notifiers subscribe to kills
-        if "notifier" in self.config and len(
-            [n for n in self.config["notifier"] if n["subscribes_to"] == "kill"]
-        ):
-            log.info(
-                "initialize: `unchaind` with {} notifier[kill].".format(
-                    len(
-                        [
-                            n
-                            for n in self.config["notifier"]
-                            if n["subscribes_to"] == "kill"
-                        ]
-                    )
-                )
-            )
-
-            loop: ioloop.IOLoop = ioloop.IOLoop.current()
-            loop.add_callback(self.loop_kills)
-        else:
-            log.warning(
-                "initialize: did not find any notifier subscribed to kills"
-            )
 
     async def periodic_mappers(self, init: bool = True) -> None:
         """Run all of our mappers periodically."""
@@ -130,18 +161,18 @@ class Command:
             *[universe_cleanup(result) for result in results]
         )
 
-        await gather(
-            *[
-                self.universe.update_with(result, init=init)
-                for result in results
-            ]
-        )
+        await gather(*[self.universe.update_with(result) for result in results])
 
         log.debug(
             "periodic_mappers: finished, got {} sys and {} conn.".format(
                 len(self.universe.systems), len(self.universe.connections)
             )
         )
+
+    async def periodic_systems(self) -> None:
+        """Call loop for our systems with our current Universe."""
+        log.debug("periodic_systems: running")
+        await periodic_systems(self.config, self.universe)
 
     async def loop_kills(self) -> None:
         """Call loop for our killboard provider with our current Universe. The

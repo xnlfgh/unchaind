@@ -8,13 +8,13 @@
 import json
 import logging
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from io import StringIO
 from urllib.parse import urlencode
 
 from lxml import etree
 
-from unchaind.universe import Universe, System, Connection, State, Optional
+from unchaind.universe import Universe, System, Connection, State
 from unchaind.http import HTTPSession
 
 
