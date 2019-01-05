@@ -101,7 +101,7 @@ async def _match_alliance_loss(
     value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
     killmail = package["killmail"]
-    return bool(killmail["victim"]["alliance_id"] == value)
+    return bool(killmail["victim"].get("alliance_id", None) == value)
 
 
 async def _match_corporation(
