@@ -89,11 +89,11 @@ async def _match_security_status(
 
     value = value.lower()
 
-    if value == "high" or value == "highsec":
+    if value in ("high", "highsec"):
         return solar_system.truesec >= 0.45
-    if value == "low" or value == "lowsec":
-        return solar_system.truesec > 0.0 and solar_system.truesec < 0.45
-    if value == "null" or value == "nullsec":
+    if value in ("low", "lowsec"):
+        return 0.0 < solar_system.truesec < 0.45
+    if value in ("null", "nullsec"):
         return solar_system.truesec < 0.0
 
 
