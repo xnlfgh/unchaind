@@ -95,8 +95,14 @@ class Universe:
 
         self.connections = {}
 
+    # XXX this is only async for consistency reasons
     @classmethod
     async def from_empty(cls) -> "Universe":
+        """Create an empty universe ready to be populated."""
+        return cls()
+
+    @classmethod
+    def from_empty_sync(cls) -> "Universe":
         """Create an empty universe ready to be populated."""
         return cls()
 
