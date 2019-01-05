@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="unchaind",
-    version="0.1.2",
+    version="0.1.3",
     description="Wormhole space kill notification tool for EVE Online.",
     url="https://github.com/supakeen/unchaind",
     author="supakeen",
