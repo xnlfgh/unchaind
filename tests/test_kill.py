@@ -1,20 +1,19 @@
 import unittest
 import asyncio
-import json
-import os
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 from unchaind import universe as unchaind_universe
 from unchaind import kill as unchaind_kill
 
 loop = asyncio.get_event_loop()
 
+
 # Some conventions for the standard killmail:
 # Attackers have 1s in their ids
 # Victim has 2s
 # No one has 9s
-def standard_package():
+def standard_package() -> Dict[str, Any]:
     return {
         "killmail": {
             "killmail_id": 1,
@@ -38,7 +37,7 @@ def standard_package():
     }
 
 
-def empty_universe():
+def empty_universe() -> unchaind_universe.Universe:
     return loop.run_until_complete(unchaind_universe.Universe.from_empty())
 
 
@@ -371,8 +370,8 @@ class NotifierKillTest(unittest.TestCase):
 
 class MatchKillmailTest(unittest.TestCase):
     def test__simple_match(self) -> None:
-        config = {
-            "notifiers": [
+        config: Dict[str, Any] = {
+            "notifier": [
                 {
                     "subscribes_to": "kill",
                     "filter": {
@@ -391,24 +390,26 @@ class MatchKillmailTest(unittest.TestCase):
                     config, empty_universe(), standard_package()
                 )
             ),
-            config["notifiers"],
+            config["notifier"],
         )
 
-        config["notifiers"][0]["filter"]["require_all_of"].append(
+        config["notifier"][0]["filter"]["require_all_of"].append(
             {"alliance_kill": 1111}
         )
+
         self.assertEqual(
             loop.run_until_complete(
                 unchaind_kill.match_killmail(
                     config, empty_universe(), standard_package()
                 )
             ),
-            config["notifiers"],
+            config["notifier"],
         )
 
-        config["notifiers"][0]["filter"]["exclude_if_any"] = [
+        config["notifier"][0]["filter"]["exclude_if_any"] = [
             {"corporation_loss": 20}
         ]
+
         self.assertEqual(
             loop.run_until_complete(
                 unchaind_kill.match_killmail(

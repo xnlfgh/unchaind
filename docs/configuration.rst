@@ -9,7 +9,7 @@ file as well.
 The configuration is formatted in multiple sections which each do different
 things.
 
-mappers
+Mappers
 =======
 The mappers section refer to the mappers from the features. In short these
 allow you to connect common EVE Online wormhole space mappers to be integrated
@@ -17,7 +17,7 @@ with ``unchaind`` so they can be used by other parts of ``unchaind``.
 
 A generic mapper block looks like:::
 
-  [[mappers]]
+  [[mapper]]
   type = "siggy"
   username = "username"
   password = "password"
@@ -42,7 +42,7 @@ home_system
 -----------
 Used for route finding. This is currently an EVE system ID.
 
-notifiers
+Notifiers
 =========
 Notifiers are the meat and bones of what ``unchaind`` can send to your outputs.
 Their configuration is very dependent on the type of notifier they are attached
@@ -61,8 +61,8 @@ subscribes_to
 -------------
 Subscribe to a certain event. Find these in the events section.
 
-notifiers.filter
-----------------
+notifier.filter
+---------------
 Filters related to the event chosen. All of these can be found in the events
 section of the documentation.
 

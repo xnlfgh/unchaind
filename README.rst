@@ -29,20 +29,20 @@ bit is to get your configuration right so let's start with a sample
 configuration that takes all kills that happen for a certain alliance and
 post them to a Discord webhook.::
 
-  [[mappers]]
+  [[mapper]]
       type = "siggy"
-      [mappers.credentials]
+      [mapper.credentials]
           username = "bla"
           password = "bla"
           home_system = 31002238
   
-  [[notifiers]]
+  [[notifier]]
       type = "slack"
       webhook = "hook_url"
       subscribes_to = "kill"
   
-      [notifiers.filter]
-          [notifiers.filter.require_all_of]
+      [notifier.filter]
+          [notifier.filter.require_all_of]
               location = ["chain"]
   
 After saving this in ``config.toml`` you can then run

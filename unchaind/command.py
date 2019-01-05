@@ -54,14 +54,14 @@ class Command:
         self.universe = await Universe.from_empty()
         self.mappers = []
 
-        if "mappers" in self.config and len(self.config["mappers"]):
+        if "mapper" in self.config and len(self.config["mapper"]):
             log.info(
                 "initialize: `unchaind` with {} mappers.".format(
-                    len(self.config["mappers"])
+                    len(self.config["mapper"])
                 )
             )
 
-            for mapper in self.config["mappers"]:
+            for mapper in self.config["mapper"]:
                 transport = await get_transport(mapper["type"]).from_config(
                     mapper["credentials"]
                 )
@@ -87,19 +87,15 @@ class Command:
             poll_mappers.start()
 
         # Check if any notifiers subscribe to kills
-        if "notifiers" in self.config and len(
-            [
-                n
-                for n in self.config["notifiers"]
-                if n["subscribes_to"] == "kill"
-            ]
+        if "notifier" in self.config and len(
+            [n for n in self.config["notifier"] if n["subscribes_to"] == "kill"]
         ):
             log.info(
-                "initialize: `unchaind` with {} notifiers[kill].".format(
+                "initialize: `unchaind` with {} notifier[kill].".format(
                     len(
                         [
                             n
-                            for n in self.config["notifiers"]
+                            for n in self.config["notifier"]
                             if n["subscribes_to"] == "kill"
                         ]
                     )
@@ -110,7 +106,7 @@ class Command:
             loop.add_callback(self.loop_kills)
         else:
             log.warning(
-                "initialize: did not find any notifiers subscribed to kills"
+                "initialize: did not find any notifier subscribed to kills"
             )
 
     async def periodic_mappers(self, init: bool = True) -> None:

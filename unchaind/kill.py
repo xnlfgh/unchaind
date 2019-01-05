@@ -2,11 +2,9 @@
 import logging
 import json
 import re
-import os
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Callable
 from asyncio import gather
-from itertools import chain
 
 from unchaind.http import HTTPSession
 from unchaind.universe import System, Universe
@@ -27,8 +25,11 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
     )
 
     if response.status_code != 200:
-        log.warning("loop: received response code %s, content %s",
-            response.status_code, response.content)
+        log.warning(
+            "loop: received response code %s, content %s",
+            response.status_code,
+            response.content,
+        )
     # responses sometimes lack .body but they always have .content
 
     try:
@@ -79,7 +80,7 @@ async def _match_location(
         return solar_system in universe.systems
 
     if value == "wspace":
-        return re.match(r"J\d{6}", solar_system.name)
+        return bool(re.match(r"J\d{6}", solar_system.name))
 
     return value.lower() == solar_system.name.lower()
 
@@ -104,8 +105,7 @@ async def _match_alliance_loss(
     value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
     killmail = package["killmail"]
-    victim = killmail.get("victim", {})
-    return killmail["victim"]["alliance_id"] == value
+    return bool(killmail["victim"]["alliance_id"] == value)
 
 
 async def _match_corporation(
@@ -128,8 +128,7 @@ async def _match_corporation_loss(
     value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
     killmail = package["killmail"]
-    victim = killmail.get("victim", {})
-    return killmail["victim"]["corporation_id"] == value
+    return bool(killmail["victim"]["corporation_id"] == value)
 
 
 async def _match_character(
@@ -152,8 +151,7 @@ async def _match_character_loss(
     value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
     killmail = package["killmail"]
-    victim = killmail.get("victim", {})
-    return killmail["victim"]["character_id"] == value
+    return bool(killmail["victim"]["character_id"] == value)
 
 
 async def _match_minimum_value(
@@ -191,7 +189,7 @@ async def match_killmail(
     killmail_id = package["killmail"]["killmail_id"]
 
     # Now let's see if any kill notifiers' filters match
-    for index, notifier in enumerate(config["notifiers"]):
+    for index, notifier in enumerate(config["notifier"]):
         log.debug(
             "considering killmail id %s for notifier %s", killmail_id, index
         )
@@ -220,7 +218,7 @@ async def match_killmail(
                     rv.append(filter_result)
             return rv
 
-        sections = {
+        sections: Dict[str, Callable[..., bool]] = {
             "require_all_of": all,
             "require_any_of": any,
             "exclude_if_any": lambda x: not any,
@@ -228,6 +226,7 @@ async def match_killmail(
         }
 
         rv = True
+
         for section, aggregator in sections.items():
             section_results = await apply_matchers(section)
             rv = rv and (
