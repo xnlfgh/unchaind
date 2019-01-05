@@ -4,7 +4,7 @@ import asyncio
 from typing import Dict, Any
 
 from unchaind import universe as unchaind_universe
-from unchaind import kill as unchaind_kill
+from unchaind.notifier import kill as unchaind_kill
 
 loop = asyncio.get_event_loop()
 
