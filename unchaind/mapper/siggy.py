@@ -119,6 +119,8 @@ class Transport:
             ),
         )
 
+        # XXX ensure we got a valid login here?
+
     async def update(self) -> Dict[str, Any]:
         """Update our internal Universe from siggy."""
         update_response = await self.http.request(
@@ -138,5 +140,5 @@ class Transport:
         try:
             return dict(json.loads(update_response.body.decode("utf8")))
         except (ValueError, AttributeError, json.decoder.JSONDecodeError):
-            log.critical("login: failed to login to Siggy")
+            log.critical("login: got invalid json from siggy on update")
             raise SystemExit(1)
