@@ -44,22 +44,7 @@ post them to a Discord webhook.::
       [notifiers.filter]
           [notifiers.filter.require_all_of]
               location = ["chain"]
-          [notifiers.filter.exclude_if_any]
-              alliance_loss = [99999999]
-              location = [30000142, 30002187]  # Jita/Amarr
   
-  [[notifiers]]
-      type = "discord"
-      webhook = "hook_url"
-      subscribes_to = "kill"
-  
-      [notifiers.filter]
-          [notifiers.filter.require_all_of]
-              alliance = [99999999]
-              minimum_value = [500000000]
-          [notifiers.filter.exclude_if_any]
-              alliance_loss = [99999998]
-
 After saving this in ``config.toml`` you can then run
 ``unchaind -c config.toml`` to get going.
 
