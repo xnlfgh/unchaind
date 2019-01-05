@@ -62,10 +62,13 @@ class System(object):
        of connections and belongs to a Universe."""
 
     identifier: int
+    name: str
+    truesec: float
 
     def __init__(self, identifier: int) -> None:
         self.identifier = identifier
         self.name = static.systems[identifier]
+        self.truesec = static.truesec[identifier]
 
     def __hash__(self) -> int:
         """The identity of a System uses its identifier for uniqueness."""
