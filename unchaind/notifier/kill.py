@@ -81,6 +81,22 @@ async def _match_location(
     return value.lower() == solar_system.name.lower()
 
 
+async def _match_security_status(
+    value: str, package: Dict[str, Any], universe: Universe
+) -> bool:
+    killmail = package["killmail"]
+    solar_system = System(killmail.get("solar_system_id", None))
+
+    value = value.lower()
+
+    if value == "high" or value == "highsec":
+        return solar_system.truesec >= 0.45
+    if value == "low" or value == "lowsec":
+        return solar_system.truesec > 0.0 and solar_system.truesec < 0.45
+    if value == "null" or value == "nullsec":
+        return solar_system.truesec < 0.0
+
+
 async def _match_alliance(
     value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
@@ -170,6 +186,7 @@ matchers: Dict[str, Any] = {
     "character_kill": _match_character_kill,
     "character_loss": _match_character_loss,
     "minimum_value": _match_minimum_value,
+    "security": _match_security_status,
 }
 
 
