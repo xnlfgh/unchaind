@@ -367,6 +367,129 @@ class NotifierKillTest(unittest.TestCase):
             False,
         )
 
+    def test__match_security_high(self) -> None:
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "high", standard_package(), empty_universe()
+                )
+            ),
+            True,
+        )
+
+        package = standard_package()
+        package["killmail"]["solar_system_id"] = 30_002_718  # Rancer
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "high", package, empty_universe()
+                )
+            ),
+            False,
+        )
+
+        package["killmail"]["solar_system_id"] = 30_003_704  # 9-F0B2
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "high", package, empty_universe()
+                )
+            ),
+            False,
+        )
+
+        package["killmail"]["solar_system_id"] = 31_002_479  # J100820
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "high", package, empty_universe()
+                )
+            ),
+            False,
+        )
+
+    def test__match_security_low(self) -> None:
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "low", standard_package(), empty_universe()
+                )
+            ),
+            False,
+        )
+
+        package = standard_package()
+        package["killmail"]["solar_system_id"] = 30_002_718  # Rancer
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "low", package, empty_universe()
+                )
+            ),
+            True,
+        )
+
+        package["killmail"]["solar_system_id"] = 30_003_704  # 9-F0B2
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "low", package, empty_universe()
+                )
+            ),
+            False,
+        )
+
+        package["killmail"]["solar_system_id"] = 31_002_479  # J100820
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "low", package, empty_universe()
+                )
+            ),
+            False,
+        )
+
+
+    def test__match_security_null(self) -> None:
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "null", standard_package(), empty_universe()
+                )
+            ),
+            False,
+        )
+
+        package = standard_package()
+        package["killmail"]["solar_system_id"] = 30_002_718  # Rancer
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "null", package, empty_universe()
+                )
+            ),
+            False,
+        )
+
+        package["killmail"]["solar_system_id"] = 30_003_704  # 9-F0B2
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "null", package, empty_universe()
+                )
+            ),
+            True,
+        )
+
+        package["killmail"]["solar_system_id"] = 31_002_479  # J100820
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_security_status(
+                    "null", package, empty_universe()
+                )
+            ),
+            True,
+        )
 
 class MatchKillmailTest(unittest.TestCase):
     def test__simple_match(self) -> None:
@@ -383,7 +506,6 @@ class MatchKillmailTest(unittest.TestCase):
                 }
             ]
         }
-
         self.assertEqual(
             loop.run_until_complete(
                 unchaind_kill.match_killmail(
@@ -396,7 +518,6 @@ class MatchKillmailTest(unittest.TestCase):
         config["notifier"][0]["filter"]["require_all_of"].append(
             {"alliance_kill": 1111}
         )
-
         self.assertEqual(
             loop.run_until_complete(
                 unchaind_kill.match_killmail(
@@ -409,7 +530,30 @@ class MatchKillmailTest(unittest.TestCase):
         config["notifier"][0]["filter"]["exclude_if_any"] = [
             {"corporation_loss": 9999}
         ]
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill.match_killmail(
+                    config, empty_universe(), standard_package()
+                )
+            ),
+            config["notifier"],
+        )
 
+        config["notifier"][0]["filter"]["require_any_of"] = [
+            {"security": "low"}
+        ]
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill.match_killmail(
+                    config, empty_universe(), standard_package()
+                )
+            ),
+            []
+        )
+
+        config["notifier"][0]["filter"]["require_any_of"].append(
+            {"security": "high"}
+        )
         self.assertEqual(
             loop.run_until_complete(
                 unchaind_kill.match_killmail(
@@ -422,7 +566,6 @@ class MatchKillmailTest(unittest.TestCase):
         config["notifier"][0]["filter"]["exclude_if_any"] = [
             {"corporation_loss": 20}
         ]
-
         self.assertEqual(
             loop.run_until_complete(
                 unchaind_kill.match_killmail(
