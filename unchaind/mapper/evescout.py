@@ -78,5 +78,4 @@ class Transport:
             return list(json.loads(update_response.body.decode("utf8")))
         except (ValueError, AttributeError, json.decoder.JSONDecodeError):
             log.critical("update: failed to parse EVEScout reply")
-            raise
             raise SystemExit(1)
