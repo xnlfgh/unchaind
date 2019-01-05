@@ -24,13 +24,15 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
         url="https://redisq.zkillboard.com/listen.php", method="GET"
     )
 
-    # XXX we need to note return codes here
+    if response.status_code != 200:
+        log.warning("loop: received response code %s, content %s",
+            response.status_code, response.content)
+    # responses sometimes lack .body but they always have .content
 
     try:
         data = json.loads(response.body.decode("utf-8"))
-    except (ValueError, AttributeError):
-        # ValueError is raised when we get invalid JSON, AttributeError
-        # is in case we have a `None` body
+    except (ValueError):
+        # ValueError is raised when we get invalid JSON
         log.warning(
             "loop: received invalid json (%r)", response.body.decode("utf-8")
         )
