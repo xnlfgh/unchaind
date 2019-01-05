@@ -96,6 +96,9 @@ async def _match_security_status(
     if value in ("null", "nullsec"):
         return solar_system.truesec < 0.0
 
+    log.warning("unknown security status '%s'", value)
+    return False
+
 
 async def _match_alliance(
     value: int, package: Dict[str, Any], universe: Universe
