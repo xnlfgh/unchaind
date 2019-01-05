@@ -25,10 +25,7 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
     )
 
     if response.code != 200:
-        log.warning(
-            "loop: received response code %s",
-            response.status_code
-        )
+        log.warning("loop: received response code %s", response.status_code)
     # responses sometimes lack .body but they always have .content
 
     try:
