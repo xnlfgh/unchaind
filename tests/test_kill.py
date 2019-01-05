@@ -407,6 +407,19 @@ class MatchKillmailTest(unittest.TestCase):
         )
 
         config["notifier"][0]["filter"]["exclude_if_any"] = [
+            {"corporation_loss": 9999}
+        ]
+
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill.match_killmail(
+                    config, empty_universe(), standard_package()
+                )
+            ),
+            config["notifier"],
+        )
+
+        config["notifier"][0]["filter"]["exclude_if_any"] = [
             {"corporation_loss": 20}
         ]
 

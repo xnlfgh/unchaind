@@ -217,8 +217,8 @@ async def match_killmail(
         sections: Dict[str, Callable[..., bool]] = {
             "require_all_of": all,
             "require_any_of": any,
-            "exclude_if_any": lambda x: not any,
-            "exclude_if_all": lambda x: not all,
+            "exclude_if_any": lambda x: not any(x),
+            "exclude_if_all": lambda x: not all(x),
         }
 
         rv = True
