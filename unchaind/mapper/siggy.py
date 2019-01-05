@@ -126,7 +126,7 @@ class Transport:
             method="POST",
             body=urlencode(
                 {
-                    "systemID": self.config["home_system_id"],
+                    "systemID": self.config["home_system"],
                     "mapLastUpdate": 0,
                     "lastUpdate": 0,
                     "mapOpen": "true",
