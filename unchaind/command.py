@@ -10,7 +10,7 @@ from tornado import ioloop
 
 from unchaind.mapper.siggy import Map as SiggyMap
 
-from unchaind.universe import Universe
+from unchaind.universe import Universe, State, Connection, System
 from unchaind.notifier.kill import loop as loop_kills
 from unchaind.notifier.system import periodic as periodic_systems
 from unchaind.util import get_mapper, get_transport
@@ -52,10 +52,22 @@ class Command:
         """Start by initializing all our mappers and setting them up with
            their login credentials."""
 
-        self.universe = await Universe.from_empty()
+        self.universe = await Universe.from_eve()
         self.mappers = []
 
         loop: ioloop.IOLoop = ioloop.IOLoop.current()
+
+        if "path" in self.config and len(self.config["path"]):
+            for path in self.config["path"]:
+                state = State()
+                setattr(state, path["type"], True)
+
+                left = System(path["from"])
+                right = System(path["to"])
+
+                connection = Connection(left, right, state)
+
+                await self.universe.connect(connection)
 
         # Check if any notifiers subscribe to kills
         if "notifier" in self.config and len(
@@ -157,6 +169,7 @@ class Command:
         # We use a full filter over the universes returned from the mappers as
         # many groups use certain systems that make the maps filled with
         # non-existent connections
+        # XXX there has to be a better way for this
         results = await gather(
             *[universe_cleanup(result) for result in results]
         )
