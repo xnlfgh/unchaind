@@ -367,6 +367,35 @@ class NotifierKillTest(unittest.TestCase):
             False,
         )
 
+    def test__match_location_wspace(self) -> None:
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_location(
+                    "J100820", standard_package(), empty_universe()
+                )
+            ),
+            False,
+        )
+
+        package = standard_package()
+        package["killmail"]["solar_system_id"] = 31_002_479  # J100820
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_location(
+                    "J100820", package, empty_universe()
+                )
+            ),
+            True,
+        )
+        self.assertEqual(
+            loop.run_until_complete(
+                unchaind_kill._match_location(
+                    "wspace", package, empty_universe()
+                )
+            ),
+            True,
+        )
+
     def test__match_security_high(self) -> None:
         self.assertEqual(
             loop.run_until_complete(
@@ -449,7 +478,6 @@ class NotifierKillTest(unittest.TestCase):
             False,
         )
 
-
     def test__match_security_null(self) -> None:
         self.assertEqual(
             loop.run_until_complete(
@@ -490,6 +518,7 @@ class NotifierKillTest(unittest.TestCase):
             ),
             True,
         )
+
 
 class MatchKillmailTest(unittest.TestCase):
     def test__simple_match(self) -> None:
@@ -548,7 +577,7 @@ class MatchKillmailTest(unittest.TestCase):
                     config, empty_universe(), standard_package()
                 )
             ),
-            []
+            [],
         )
 
         config["notifier"][0]["filter"]["require_any_of"].append(
