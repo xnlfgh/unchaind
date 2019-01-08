@@ -62,7 +62,7 @@ class HTTPSession:
     def cookie_parse(self, response: HTTPResponse) -> None:
         """Parse multiple set-header cookies into cookies."""
 
-        cookies = SimpleCookie()
+        cookies = SimpleCookie()  # type: ignore
         for cookie in response.headers.get_list("Set-Cookie"):
             cookies.load(cookie)
 

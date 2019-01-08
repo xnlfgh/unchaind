@@ -25,8 +25,8 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
     )
 
     if response.code != 200:
-        log.warning("loop: received response code %s", response.status_code)
-    # responses sometimes lack .body but they always have .content
+        log.warning("loop: received response code %s", response.code)
+        return
 
     try:
         data = json.loads(response.body.decode("utf-8"))
@@ -81,6 +81,25 @@ async def _match_location(
     return value.lower() == solar_system.name.lower()
 
 
+async def _match_security_status(
+    value: str, package: Dict[str, Any], universe: Universe
+) -> bool:
+    killmail = package["killmail"]
+    solar_system = System(killmail.get("solar_system_id", None))
+
+    value = value.lower()
+
+    if value in ("high", "highsec"):
+        return solar_system.truesec >= 0.45
+    if value in ("low", "lowsec"):
+        return 0.0 < solar_system.truesec < 0.45
+    if value in ("null", "nullsec"):
+        return solar_system.truesec < 0.0
+
+    log.warning("unknown security status '%s'", value)
+    return False
+
+
 async def _match_alliance(
     value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
@@ -101,7 +120,7 @@ async def _match_alliance_loss(
     value: int, package: Dict[str, Any], universe: Universe
 ) -> bool:
     killmail = package["killmail"]
-    return bool(killmail["victim"]["alliance_id"] == value)
+    return bool(killmail["victim"].get("alliance_id", None) == value)
 
 
 async def _match_corporation(
@@ -170,6 +189,7 @@ matchers: Dict[str, Any] = {
     "character_kill": _match_character_kill,
     "character_loss": _match_character_loss,
     "minimum_value": _match_minimum_value,
+    "security": _match_security_status,
 }
 
 
@@ -217,8 +237,8 @@ async def match_killmail(
         sections: Dict[str, Callable[..., bool]] = {
             "require_all_of": all,
             "require_any_of": any,
-            "exclude_if_any": lambda x: not any,
-            "exclude_if_all": lambda x: not all,
+            "exclude_if_any": lambda x: not any(x),
+            "exclude_if_all": lambda x: not all(x),
         }
 
         rv = True

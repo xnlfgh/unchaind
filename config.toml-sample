@@ -1,9 +1,10 @@
+home_system = 31002238
+
 [[mapper]]
     type = "siggy"
     [mapper.credentials]
         username = "bla"
         password = "bla"
-        home_system = 31002238
 
 [[notifier]]
     type = "slack"
@@ -11,11 +12,14 @@
     subscribes_to = "kill"
 
     [notifier.filter]
-        [notifier.filter.require_all_of]
-            location = ["chain"]
-        [notifier.filter.exclude_if_any]
-            alliance_loss = [99999999]
-            location = [30000142, 30002187]
+        require_all_of = [
+            {location: "chain"},
+        ]
+        exclude_if_any = [
+            {alliance_loss: 99999999},
+            {location: "Jita"},
+            {location: "Amarr"},
+        ]
 
 [[notifier]]
     type = "discord"
@@ -23,5 +27,10 @@
     subscribes_to = "system"
 
     [notifier.filter]
-        [notifier.filter.require_all_of]
-            location = [30000142, 30002187]
+        require_all_of = [
+            {alliance_kill: 88888888},
+        ]
+        require_any_of = [
+            {security: "low"},
+            {security: "null"},
+        ]

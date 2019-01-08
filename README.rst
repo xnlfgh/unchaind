@@ -24,27 +24,33 @@ be used as a generic killbot which can filter kills in many ways.
 
 Examples
 ========
-Some examples is probably the easiest way to get started. The most important
-bit is to get your configuration right so let's start with a sample
-configuration that takes all kills that happen for a certain alliance and
-post them to a Discord webhook.::
+An example is probably the easiest way to get started. The most important
+bit is to get your configuration right, so let's start with a sample
+configuration that takes all lowsec and nullsec kills for a certain
+alliance and posts them to a Discord webhook.::
+
+  home_system = 31002238
 
   [[mapper]]
       type = "siggy"
       [mapper.credentials]
           username = "bla"
           password = "bla"
-          home_system = 31002238
-  
+
   [[notifier]]
-      type = "slack"
+      type = "discord"
       webhook = "hook_url"
-      subscribes_to = "kill"
-  
+      subscribes_to = "system"
+
       [notifier.filter]
-          [notifier.filter.require_all_of]
-              location = ["chain"]
-  
+          require_all_of = [
+              {alliance_kill: 88888888},
+          ]
+          require_any_of = [
+              {security: "low"},
+              {security: "null"},
+          ]
+
 After saving this in ``config.toml`` you can then run
 ``unchaind -c config.toml`` to get going.
 
