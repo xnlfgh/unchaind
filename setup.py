@@ -9,7 +9,13 @@ setup(
     author_email="cmdr@supakeen.com",
     packages=find_packages(),
     setup_requires=["pytest-runner", "pytest-cov"],
-    install_requires=["tornado", "lxml", "click", "pytoml"],
+    install_requires=[
+        "tornado",
+        "lxml",
+        "click",
+        "pytoml",
+        "marshmallow==3.0.0rc2",
+    ],
     tests_require=["pytest", "pytest-cov"],
     entry_points={"console_scripts": ["unchaind=unchaind.command:main"]},
     extras_require={

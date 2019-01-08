@@ -10,8 +10,11 @@ import logging
 
 from typing import Dict, Any, Optional, List
 
+import marshmallow
+
 from unchaind.universe import Universe, System, Connection, State
 from unchaind.http import HTTPSession
+from unchaind.schema import evescout as schema
 
 
 log = logging.getLogger(__name__)
@@ -41,8 +44,8 @@ class Map:
 
             await universe.connect(
                 Connection(
-                    System(connection["sourceSolarSystem"]["id"]),
-                    System(connection["destinationSolarSystem"]["id"]),
+                    System(connection["source_solar_system"]["id"]),
+                    System(connection["destination_solar_system"]["id"]),
                     state,
                 )
             )
@@ -75,7 +78,11 @@ class Transport:
         )
 
         try:
-            return list(json.loads(update_response.body.decode("utf8")))
+            return list(
+                schema.Item().loads(
+                    update_response.body, unknown=marshmallow.RAISE, many=True
+                )
+            )
         except (ValueError, AttributeError, json.decoder.JSONDecodeError):
             log.critical("update: failed to parse EVEScout reply")
             raise SystemExit(1)
