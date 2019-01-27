@@ -111,7 +111,7 @@ class Command:
                 )
             )
 
-            poll_systems: ioloop.PeriodicCallback = ioloop.PeriodicCallback(
+            poll_systems: ioloop.PeriodicCallback = ioloop.PeriodicCallback(  # type: ignore
                 self.periodic_systems, 5000
             )
             poll_systems.start()
@@ -147,7 +147,7 @@ class Command:
             )
 
             # We can keep calling our periodic mappers now
-            poll_mappers: ioloop.PeriodicCallback = ioloop.PeriodicCallback(
+            poll_mappers: ioloop.PeriodicCallback = ioloop.PeriodicCallback(  # type: ignore
                 self.periodic_mappers, 5000
             )
             poll_mappers.start()
