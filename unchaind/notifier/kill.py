@@ -14,6 +14,55 @@ from unchaind.sink import sinks
 log = logging.getLogger(__name__)
 
 
+async def _process_one_killmail(
+    killmail_str: str, config: Dict[str, Any], universe: Universe
+) -> None:
+    """Attempt to parse killmail_str as zkb-provided JSON, then invokes
+    appropriate matchers & notifiers as configured"""
+
+    try:
+        data = json.loads(killmail_str)
+    except ValueError as err:
+        log.warning(
+            "_process_one_killmail: received invalid JSON (%r)", killmail_str
+        )
+        return
+
+    if "package" not in data:
+        log.warning(
+            "_process_one_killmail: did not contain 'package' key (%r)",
+            killmail_str,
+        )
+        return
+
+    package = data.get("package", None)
+
+    if not package:
+        log.debug("_process_one_killmail: the package was empty")
+        return
+
+    try:
+        killmail = package["killmail"]
+    except KeyError:
+        log.warning(
+            "loop: received unparseable killmail from zkillboard (%r)",
+            killmail_str,
+        )
+        return
+
+    kill_id = killmail["killmail_id"]
+    message = f"https://zkillboard.com/kill/{kill_id}/"
+
+    # Find any matching notifiers
+    matches = await match_killmail(config, universe, package)
+
+    if not matches:
+        log.debug(f"loop: no matches for %d", kill_id)
+        return
+
+    await gather(*[sinks[match["type"]](match, message) for match in matches])
+
+
 async def loop(config: Dict[str, Any], universe: Universe) -> None:
     """Run a single iteration of the zkillboard RedisQ API which lists all
        kills then we filter those kills."""
@@ -29,41 +78,12 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
         return
 
     try:
-        data = json.loads(response.body.decode("utf-8"))
-    except (ValueError):
-        # ValueError is raised when we get invalid JSON
-        log.warning(
-            "loop: received invalid json (%r)", response.body.decode("utf-8")
-        )
+        killmail_str = response.body.decode("utf-8")
+    except UnicodeDecodeError as err:
+        log.warning("loop: %s (%r)", err, response.body, exc_info=err)
         return
 
-    if "package" not in data:
-        log.warning("loop: response did not contain 'package' key")
-        return
-
-    package = data.get("package", None)
-
-    if not package:
-        log.debug("loop: the package was empty")
-        return
-
-    try:
-        killmail = package["killmail"]
-    except KeyError:
-        log.warning("loop: received unparseable killmail from zkillboard")
-        return
-
-    kill_id = killmail["killmail_id"]
-    message = f"https://zkillboard.com/kill/{kill_id}/"
-
-    # Find any matching notifiers
-    matches = await match_killmail(config, universe, package)
-
-    if not matches:
-        log.debug(f"loop: no matches for %d", kill_id)
-        return
-
-    await gather(*[sinks[match["type"]](match, message) for match in matches])
+    _process_one_killmail(killmail_str, config, universe)
 
 
 async def _match_location(
