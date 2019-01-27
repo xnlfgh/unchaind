@@ -22,7 +22,7 @@ class HTTPSession:
         self.http_client = AsyncHTTPClient()
         self.referer = ""
 
-    async def request(self, *args: str, **kwargs: Any) -> HTTPResponse:
+    async def request(self, *args: Any, **kwargs: Any) -> HTTPResponse:
         """Perform a request with cookies from the session and following
            redirects ourselves."""
         kwargs["headers"] = dict(DEFAULT_HEADERS)
