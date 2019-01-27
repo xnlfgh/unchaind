@@ -14,7 +14,7 @@ from unchaind.sink import sinks
 log = logging.getLogger(__name__)
 
 
-async def _process_one_killmail(
+async def process_one_killmail(
     killmail_str: str, config: Dict[str, Any], universe: Universe
 ) -> None:
     """Attempt to parse killmail_str as zkb-provided JSON, then invokes
@@ -24,13 +24,13 @@ async def _process_one_killmail(
         data = json.loads(killmail_str)
     except ValueError as err:
         log.warning(
-            "_process_one_killmail: received invalid JSON (%r)", killmail_str
+            "process_one_killmail: received invalid JSON (%r)", killmail_str
         )
         return
 
     if "package" not in data:
         log.warning(
-            "_process_one_killmail: did not contain 'package' key (%r)",
+            "process_one_killmail: did not contain 'package' key (%r)",
             killmail_str,
         )
         return
@@ -38,7 +38,7 @@ async def _process_one_killmail(
     package = data.get("package", None)
 
     if not package:
-        log.debug("_process_one_killmail: the package was empty")
+        log.debug("process_one_killmail: the package was empty")
         return
 
     try:
@@ -83,7 +83,7 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
         log.warning("loop: %s (%r)", err, response.body, exc_info=err)
         return
 
-    _process_one_killmail(killmail_str, config, universe)
+    await process_one_killmail(killmail_str, config, universe)
 
 
 async def _match_location(
