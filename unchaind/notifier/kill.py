@@ -7,6 +7,7 @@ from typing import Dict, Any, List, Callable
 from asyncio import gather
 
 from unchaind.http import HTTPSession
+from unchaind.notifier.kill_util import get_payload_for_killmail
 from unchaind.universe import System, Universe
 from unchaind.sink import sinks
 
@@ -60,7 +61,18 @@ async def process_one_killmail(
         log.debug(f"process_one_killmail: no matches for %d", kill_id)
         return
 
-    await gather(*[sinks[match["type"]](match, message) for match in matches])
+    await gather(
+        *[
+            sinks[match["type"]](
+                match,
+                message,
+                payload=await get_payload_for_killmail(
+                    match, package, universe
+                ),
+            )
+            for match in matches
+        ]
+    )
 
 
 async def loop(config: Dict[str, Any], universe: Universe) -> None:
