@@ -56,6 +56,17 @@ class Map:
                 )
             )
 
+        aliases: Dict[System, str] = {}
+        systems = chain["systems"]
+        for system in systems.values():
+            if (
+                len(system.get("displayName", ""))
+                and system["displayName"] != system["name"]
+            ):
+                aliases[System(system["systemID"])] = system["displayName"]
+
+        universe.set_aliases(aliases)
+
         self.universe = universe
 
         return self.universe

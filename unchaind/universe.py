@@ -90,9 +90,10 @@ class Universe:
        connections and flattened connections into systems."""
 
     connections: Dict[FrozenSet[System], Connection]
+    aliases: Dict[System, str]
 
     def __init__(self,) -> None:
-
+        self.aliases = {}
         self.connections = {}
 
     # XXX this is only async for consistency reasons
@@ -125,6 +126,15 @@ class Universe:
     @property
     def systems(self) -> Set[System]:
         return set(chain.from_iterable(self.connections))
+
+    def set_aliases(self, aliases: Dict[System, str]) -> None:
+        self.aliases = aliases
+
+    async def system_name(self, system: System) -> str:
+        if system in self.aliases:
+            return f"{self.aliases[system]} ({system.name})"
+
+        return system.name
 
     async def connect(self, connection: Connection) -> None:
         """Add a connection as long as it doesn't exist."""
@@ -167,6 +177,8 @@ class Universe:
                 await self.disconnect(connection)
             except ConnectionNonexistent:
                 continue
+
+        self.aliases = universe.aliases
 
     @property
     def graph(self) -> Dict[System, List[System]]:
