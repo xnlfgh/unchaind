@@ -3,7 +3,7 @@
 import json
 import logging
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from unchaind.http import HTTPSession
 
@@ -11,7 +11,12 @@ from unchaind.http import HTTPSession
 log = logging.getLogger(__name__)
 
 
-async def discord(notifier: Dict[str, Any], message: str) -> None:
+async def discord(
+    notifier: Dict[str, Any],
+    message: str,
+    *,
+    payload: Optional[Dict[str, Any]] = None,
+) -> None:
     """Send a Discord message to the configured channel."""
     http = HTTPSession()
 
@@ -22,20 +27,34 @@ async def discord(notifier: Dict[str, Any], message: str) -> None:
     )
 
 
-async def console(notifier: Dict[str, Any], message: str) -> None:
+async def console(
+    notifier: Dict[str, Any],
+    message: str,
+    *,
+    payload: Optional[Dict[str, Any]] = None,
+) -> None:
     """Log a message.  Intended for debugging use."""
     log.info("NOTIFICATION: " + message)
 
 
-async def slack(notifier: Dict[str, Any], message: str) -> None:
-    """Send a Slack message to the configured channel."""
-    http = HTTPSession()
+async def slack(
+    notifier: Dict[str, Any],
+    message: str,
+    *,
+    payload: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Send a Slack message to the configured channel.  If payload was provided,
+    it's JSONified and used as the body of the request to Slack.  Otherwise, message
+    will be displayed."""
 
-    await http.request(
-        url=notifier["webhook"],
-        method="POST",
-        body=json.dumps({"text": message}),
-    )
+    if payload is not None:
+        http = HTTPSession()
+
+        await http.request(
+            url=notifier["webhook"], method="POST", body=json.dumps(payload)
+        )
+    else:
+        await slack(notifier, message, payload={"text": message})
 
 
 sinks = {"discord": discord, "console": console, "slack": slack}
