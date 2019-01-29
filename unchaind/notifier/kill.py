@@ -20,9 +20,15 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
 
     http = HTTPSession()
 
-    response = await http.request(
-        url="https://redisq.zkillboard.com/listen.php", method="GET"
-    )
+    try:
+        response = await http.request(
+            url="https://redisq.zkillboard.com/listen.php", method="GET"
+        )
+    except Exception as err:
+        log.warning(
+            "loop: zkillboard fetch threw exception %s", err, exc_info=err
+        )
+        return
 
     if response.code != 200:
         log.warning("loop: received response code %s", response.code)
