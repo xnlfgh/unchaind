@@ -5,6 +5,7 @@ from asyncio import gather
 from typing import List, Dict, Any, Optional
 
 import click
+import functools
 
 from tornado import ioloop
 
@@ -12,6 +13,7 @@ from unchaind.mapper.siggy import Map as SiggyMap
 
 from unchaind.universe import Universe, State, Connection, System
 from unchaind.notifier.kill import loop as loop_kills
+from unchaind.notifier.kill import process_one_killmail as oneshot_kill
 from unchaind.notifier.system import periodic as periodic_systems
 from unchaind.util import get_mapper, get_transport
 from unchaind.log import setup_log
@@ -48,10 +50,11 @@ class Command:
     def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
 
-    async def initialize(self) -> None:
-        """Start by initializing all our mappers and setting them up with
-           their login credentials."""
+    async def _initialize(self) -> None:
+        """Configures initial universe, loads mappers and runs one iteration,
+        does not start any periodic callbacks or loops.
 
+        Prereq of daemon() and killmail_oneshot()."""
         self.universe = await Universe.from_eve()
         self.mappers = []
 
@@ -68,57 +71,6 @@ class Command:
                 connection = Connection(left, right, state)
 
                 await self.universe.connect(connection)
-
-        # Check if any notifiers subscribe to kills
-        if "notifier" in self.config and len(
-            [n for n in self.config["notifier"] if n["subscribes_to"] == "kill"]
-        ):
-            log.info(
-                "initialize: `unchaind` with {} notifier[kill].".format(
-                    len(
-                        [
-                            n
-                            for n in self.config["notifier"]
-                            if n["subscribes_to"] == "kill"
-                        ]
-                    )
-                )
-            )
-
-            loop.add_callback(self.loop_kills)
-        else:
-            log.warning(
-                "initialize: did not find any notifier subscribed to kills"
-            )
-
-        # Check if any notifiers subscribe to systems
-        if "notifier" in self.config and len(
-            [
-                n
-                for n in self.config["notifier"]
-                if n["subscribes_to"] == "system"
-            ]
-        ):
-            log.info(
-                "initialize: `unchaind` with {} notifier[system].".format(
-                    len(
-                        [
-                            n
-                            for n in self.config["notifier"]
-                            if n["subscribes_to"] == "system"
-                        ]
-                    )
-                )
-            )
-
-            poll_systems: ioloop.PeriodicCallback = ioloop.PeriodicCallback(  # type: ignore
-                self.periodic_systems, 5000
-            )
-            poll_systems.start()
-        else:
-            log.warning(
-                "initialize: did not find any notifier subscribed to systems"
-            )
 
         if "mapper" in self.config and len(self.config["mapper"]):
             log.info(
@@ -146,11 +98,76 @@ class Command:
                 )
             )
 
+    async def killmail_oneshot(self, killmail_str: str) -> None:
+        """Given a string of zkb JSON data, performs one run of the mappers
+        to load up our Universe, then runs kill notifiers/matchers as configured.
+        Intended for debugging/testing/development."""
+        await self._initialize()
+
+        await oneshot_kill(killmail_str, self.config, self.universe)
+
+    async def daemon(self) -> None:
+        """Long-running loop that periodically runs all configured mappers,
+        subscribers, and notifiers."""
+        await self._initialize()
+
+        loop: ioloop.IOLoop = ioloop.IOLoop.current()
+
+        if "mapper" in self.config and len(self.config["mapper"]):
             # We can keep calling our periodic mappers now
             poll_mappers: ioloop.PeriodicCallback = ioloop.PeriodicCallback(  # type: ignore
                 self.periodic_mappers, 5000
             )
             poll_mappers.start()
+
+        # Check if any notifiers subscribe to kills
+        if "notifier" in self.config and len(
+            [n for n in self.config["notifier"] if n["subscribes_to"] == "kill"]
+        ):
+            log.info(
+                "daemon: `unchaind` with {} notifier[kill].".format(
+                    len(
+                        [
+                            n
+                            for n in self.config["notifier"]
+                            if n["subscribes_to"] == "kill"
+                        ]
+                    )
+                )
+            )
+
+            loop.add_callback(self.loop_kills)
+        else:
+            log.warning("daemon: did not find any notifier subscribed to kills")
+
+        # Check if any notifiers subscribe to systems
+        if "notifier" in self.config and len(
+            [
+                n
+                for n in self.config["notifier"]
+                if n["subscribes_to"] == "system"
+            ]
+        ):
+            log.info(
+                "daemon: `unchaind` with {} notifier[system].".format(
+                    len(
+                        [
+                            n
+                            for n in self.config["notifier"]
+                            if n["subscribes_to"] == "system"
+                        ]
+                    )
+                )
+            )
+
+            poll_systems: ioloop.PeriodicCallback = ioloop.PeriodicCallback(  # type: ignore
+                self.periodic_systems, 5000
+            )
+            poll_systems.start()
+        else:
+            log.warning(
+                "daemon: did not find any notifier subscribed to systems"
+            )
 
     async def periodic_mappers(self, init: bool = True) -> None:
         """Run all of our mappers periodically."""
@@ -217,7 +234,17 @@ class Command:
     type=click.Path(exists=False),
     help="Logfile to log to. Normally `unchaind` logs to stderr.",
 )
-def main(config: str, verbosity: int, log_file: Optional[str]) -> None:
+@click.option(
+    "--oneshot-killmail-file",
+    type=click.Path(exists=True),
+    help="If true, instead of starting the daemon loop, run a single iteration for a given file containing killmail JSON.",
+)
+def main(
+    config: str,
+    verbosity: int,
+    log_file: Optional[str],
+    oneshot_killmail_file: Optional[str],
+) -> None:
     """This is the ``unchaind`` EVE online tool. It allows for interactivity
        between wormhole space and your Discord.
 
@@ -234,7 +261,13 @@ def main(config: str, verbosity: int, log_file: Optional[str]) -> None:
     command = Command(config=parse_config(config))
 
     loop: ioloop.IOLoop = ioloop.IOLoop.current()
-    loop.add_callback(command.initialize)
+
+    if oneshot_killmail_file is not None:
+        with open(oneshot_killmail_file) as f:
+            loop.run_sync(functools.partial(command.killmail_oneshot, f.read()))
+            return
+
+    loop.add_callback(command.daemon)
 
     loop.start()
 
