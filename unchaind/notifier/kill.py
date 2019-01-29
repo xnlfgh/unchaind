@@ -45,7 +45,7 @@ async def process_one_killmail(
         killmail = package["killmail"]
     except KeyError:
         log.warning(
-            "loop: received unparseable killmail from zkillboard (%r)",
+            "process_one_killmail: received unparseable killmail from zkillboard (%r)",
             killmail_str,
         )
         return
@@ -57,7 +57,7 @@ async def process_one_killmail(
     matches = await match_killmail(config, universe, package)
 
     if not matches:
-        log.debug(f"loop: no matches for %d", kill_id)
+        log.debug(f"process_one_killmail: no matches for %d", kill_id)
         return
 
     await gather(*[sinks[match["type"]](match, message) for match in matches])
