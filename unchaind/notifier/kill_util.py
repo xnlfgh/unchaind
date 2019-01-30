@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional, Awaitable
 
 from asyncio import gather, ensure_future, Future
 
-import unchaind.esi_utils as esi_utils
+import unchaind.esi_util as esi_util
 from unchaind.universe import Universe, System
 
 log = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ async def char_name_with_ticker(char: Dict[str, Any]) -> str:
         if "character_id" in char:
             details, entity = await gather(
                 *[
-                    esi_utils.character_details(char["character_id"]),
+                    esi_util.character_details(char["character_id"]),
                     entity_ticker_for_char(char),
                 ]
             )
@@ -49,10 +49,10 @@ async def entity_ticker_for_char(char: Dict[str, Any]) -> str:
     or something close."""
     try:
         if "alliance_id" in char:
-            alliance = await esi_utils.alliance_details(char["alliance_id"])
+            alliance = await esi_util.alliance_details(char["alliance_id"])
             return str(alliance["ticker"])
         elif "corporation_id" in char:
-            corp = await esi_utils.corporation_details(char["corporation_id"])
+            corp = await esi_util.corporation_details(char["corporation_id"])
             return str(corp["ticker"])
         elif "faction_id" in char:
             return "{NPC}"
@@ -89,7 +89,7 @@ async def _slack_payload_for_killmail(
     victim_moniker = promise(
         char_name_with_ticker(package["killmail"]["victim"])
     )
-    victim_ship = promise(esi_utils.type_details(victim_ship_type))
+    victim_ship = promise(esi_util.type_details(victim_ship_type))
     system_name = promise(
         universe.system_name(System(package["killmail"]["solar_system_id"]))
     )
@@ -120,7 +120,7 @@ async def _slack_payload_for_killmail(
     attacker_ships = promise(
         gather(
             *[
-                (esi_utils.type_details(x["ship_type_id"]))
+                (esi_util.type_details(x["ship_type_id"]))
                 for x in package["killmail"]["attackers"]
             ]
         )
