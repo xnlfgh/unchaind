@@ -37,7 +37,12 @@ async def char_name_with_ticker(char: Dict[str, Any]) -> str:
                 ]
             )
             return f"{details['name']} [{entity}]"
-        if "faction_id" in char:
+        elif "corporation_id" in char:
+            # Some kills (e.g. POS modules) have no char id, but
+            # still belong to a corp/alliance
+            return await entity_ticker_for_char(char)
+        elif "faction_id" in char:
+            # If we have none of the above, just a faction, it was an NPC
             return "NPC"
     except:
         pass
@@ -175,8 +180,16 @@ async def _slack_payload_for_killmail(
     ):
         rv["attachments"][0]["fields"].extend(  # type: ignore
             [
-                {"short": True, "title": "Final blow", "value": final_blow.result()},
-                {"short": True, "title": "Top damage", "value": top_dmg.result()},
+                {
+                    "short": True,
+                    "title": "Final blow",
+                    "value": final_blow.result(),
+                },
+                {
+                    "short": True,
+                    "title": "Top damage",
+                    "value": top_dmg.result(),
+                },
             ]
         )
 
