@@ -59,12 +59,8 @@ async def entity_ticker_for_char(char: Dict[str, Any]) -> str:
 def _stringify_counter_by_popularity(c: collections.Counter) -> str:
     """Given a counter, give a string summary in descending popularity."""
     return ", ".join(
-        [
-            f"{v} {k}"
-            for k, v in sorted(
-                c.items(), reverse=True, key=operator.itemgetter(1)
-            )
-        ]
+        f"{v} {k}"
+        for k, v in sorted(c.items(), reverse=True, key=operator.itemgetter(1))
     )
 
 
