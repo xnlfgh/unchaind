@@ -5,7 +5,7 @@ import millify
 import collections
 import operator
 
-from typing import Dict, Any, Optional, Awaitable
+from typing import Dict, Any, Optional, Callable, Awaitable
 
 from asyncio import gather, ensure_future, Future
 
@@ -13,16 +13,6 @@ import unchaind.esi_util as esi_util
 from unchaind.universe import Universe, System
 
 log = logging.getLogger(__name__)
-
-
-async def get_payload_for_killmail(
-    notifier: Dict[str, Any], package: Dict[str, Any], universe: Universe
-) -> Optional[Dict[str, Any]]:
-    """Given a notifier and a killmail, attempt to format a pretty payload for it."""
-    if notifier["type"] == "slack":
-        return await _slack_payload_for_killmail(notifier, package, universe)
-
-    return None
 
 
 async def char_name_with_ticker(char: Dict[str, Any]) -> str:
@@ -194,3 +184,8 @@ async def _slack_payload_for_killmail(
         )
 
     return rv
+
+
+payload_for_killmail: Dict[str, Callable] = {
+    "slack": _slack_payload_for_killmail
+}
