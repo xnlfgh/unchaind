@@ -14,29 +14,29 @@ _ESI = "https://esi.evetech.net/latest/"
 
 @alru_cache(maxsize=8192)
 async def character_details(character: int) -> Dict[str, Any]:
-    rv = await _do_esi_request(f"{_ESI}characters/{character}/")
+    rv = await _esi_request(f"{_ESI}characters/{character}/")
     return rv
 
 
 @alru_cache(maxsize=4096)
 async def corporation_details(corp: int) -> Dict[str, Any]:
-    rv = await _do_esi_request(f"{_ESI}corporations/{corp}/")
+    rv = await _esi_request(f"{_ESI}corporations/{corp}/")
     return rv
 
 
 @alru_cache(maxsize=4096)
 async def alliance_details(alliance: int) -> Dict[str, Any]:
-    rv = await _do_esi_request(f"{_ESI}alliances/{alliance}/")
+    rv = await _esi_request(f"{_ESI}alliances/{alliance}/")
     return rv
 
 
 @alru_cache(maxsize=4096)
 async def type_details(type: int) -> Dict[str, Any]:
-    rv = await _do_esi_request(f"{_ESI}universe/types/{type}/")
+    rv = await _esi_request(f"{_ESI}universe/types/{type}/")
     return rv
 
 
-async def _do_esi_request(url: str) -> Dict[str, Any]:
+async def _esi_request(url: str) -> Dict[str, Any]:
     http = HTTPSession()
 
     response = await http.request(url=url, method="GET")
