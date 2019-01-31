@@ -127,9 +127,6 @@ class Universe:
     def systems(self) -> Set[System]:
         return set(chain.from_iterable(self.connections))
 
-    def set_aliases(self, aliases: Dict[System, str]) -> None:
-        self.aliases = aliases
-
     async def system_name(self, system: System) -> str:
         if system in self.aliases:
             return f"{self.aliases[system]} ({system.name})"

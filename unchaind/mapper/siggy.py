@@ -65,7 +65,7 @@ class Map:
             ):
                 aliases[System(system["systemID"])] = system["displayName"]
 
-        universe.set_aliases(aliases)
+        universe.aliases = aliases
 
         self.universe = universe
 
