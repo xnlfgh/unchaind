@@ -89,7 +89,7 @@ class KillmailStats:
         return f"https://imageserver.eveonline.com/Render/{self.victim_ship_typeid}_128.png"
 
     def pretty_isk_value(self) -> str:
-        return millify.millify(self.isk_value, precision=2)
+        return str(millify.millify(self.isk_value, precision=2))
 
 
 async def stats_for_killmail(
