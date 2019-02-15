@@ -8,6 +8,9 @@ import operator
 from typing import Dict, Any, Optional, Callable, Awaitable
 
 from asyncio import gather, ensure_future, Future
+from tornado.gen import multi
+
+from dataclasses import dataclass
 
 import unchaind.esi_util as esi_util
 from unchaind.universe import Universe, System
@@ -64,97 +67,116 @@ def _stringify_counter_by_popularity(c: collections.Counter) -> str:
     )
 
 
-async def _slack_payload_for_killmail(
-    notifier: Dict[str, Any], package: Dict[str, Any], universe: Universe
-) -> Optional[Dict[str, Any]]:
-    tasks = []
+@dataclass(frozen=True)
+class KillmailStats:
+    kill_id: int
+    timestamp: int
+    victim_moniker: str
+    victim_ship: str
+    victim_ship_typeid: int
+    final_blow_moniker: str
+    top_damage_moniker: str
+    attacker_entities_summary: str
+    attacker_ships_summary: str
+    isk_value: int
+    solar_system_id: int
+    solar_system_name: str
 
-    def promise(t: Awaitable) -> Future:
-        """Given an awaitable, make sure it is a Future, and write it down in our list
-        of pending tasks."""
-        fut = ensure_future(t)
-        tasks.append(fut)
-        return fut
+    def zkb_url(self) -> str:
+        return f"https://zkillboard.com/kill/{self.kill_id}/"
 
-    victim_ship_type = package["killmail"]["victim"]["ship_type_id"]
-    victim_moniker = promise(
-        char_name_with_ticker(package["killmail"]["victim"])
-    )
-    victim_ship = promise(esi_util.type_details(victim_ship_type))
-    system_name = promise(
-        universe.system_name(System(package["killmail"]["solar_system_id"]))
-    )
-    final_blow = promise(
-        char_name_with_ticker(
+    def victim_ship_thumb_url(self) -> str:
+        return f"https://imageserver.eveonline.com/Render/{self.victim_ship_typeid}_128.png"
+
+    def pretty_isk_value(self) -> str:
+        return str(millify.millify(self.isk_value, precision=2))
+
+
+async def stats_for_killmail(
+    package: Dict[str, Any], universe: Universe
+) -> KillmailStats:
+    victim_ship_typeid: int = int(package["killmail"]["victim"]["ship_type_id"])
+    solar_system_id: int = int(package["killmail"]["solar_system_id"])
+    d = {
+        "victim_moniker": char_name_with_ticker(package["killmail"]["victim"]),
+        "victim_ship": esi_util.type_details(victim_ship_typeid),
+        "final_blow_moniker": char_name_with_ticker(
             next(
                 filter(
                     lambda x: x["final_blow"], package["killmail"]["attackers"]
                 )
             )
-        )
-    )
-    top_dmg = promise(
-        char_name_with_ticker(
+        ),
+        "top_damage_moniker": char_name_with_ticker(
             max(
                 package["killmail"]["attackers"], key=lambda x: x["damage_done"]
             )
-        )
-    )
-    attacker_entities = promise(
-        gather(
+        ),
+        "attacker_entities": gather(
             *[
                 entity_ticker_for_char(x)
                 for x in package["killmail"]["attackers"]
             ]
-        )
-    )
-    attacker_ships = promise(
-        gather(
+        ),
+        "attacker_ships": gather(
             *[
                 (esi_util.type_details(x["ship_type_id"]))
                 for x in package["killmail"]["attackers"]
             ]
-        )
+        ),
+        "solar_system_name": universe.system_name(System(solar_system_id)),
+    }
+    d = await multi(d)
+    d["victim_ship"] = d["victim_ship"]["name"]
+    d["attacker_entities_summary"] = _stringify_counter_by_popularity(
+        collections.Counter(d["attacker_entities"])
     )
-
-    await gather(*tasks)
-
-    text = f"{victim_moniker.result()} lost a {victim_ship.result()['name']} "
-    text += f"worth {millify.millify(package['zkb']['totalValue'], precision=2)} ISK "
-    text += f"\nin *{system_name.result()}* "
-
-    summarized_entities = _stringify_counter_by_popularity(
-        collections.Counter(attacker_entities.result())
-    )
-    summarized_ships = _stringify_counter_by_popularity(
+    d["attacker_ships_summary"] = _stringify_counter_by_popularity(
         collections.Counter(
-            map(operator.itemgetter("name"), attacker_ships.result())
+            map(operator.itemgetter("name"), d["attacker_ships"])
         )
     )
+    d.pop("attacker_entities", None)
+    d.pop("attacker_ships", None)
+    d["timestamp"] = int(
+        dateutil.parser.parse(package["killmail"]["killmail_time"]).timestamp()
+    )
+    d["victim_ship_typeid"] = victim_ship_typeid
+    d["kill_id"] = package["killID"]
+    d["isk_value"] = package['zkb']['totalValue']
+    d["solar_system_id"] = solar_system_id
+    return KillmailStats(**d)
+
+
+async def _slack_payload_for_killmail(
+    notifier: Dict[str, Any], package: Dict[str, Any], universe: Universe
+) -> Optional[Dict[str, Any]]:
+
+    stats = await stats_for_killmail(package, universe)
+
+    text = f"{stats.victim_moniker} lost a {stats.victim_ship} "
+    text += f"worth {stats.pretty_isk_value()} ISK "
+    text += f"\nin *{stats.solar_system_name}* "
 
     rv = {
         "attachments": [
             {
                 "fallback": text,
                 "text": text,
-                "footer": f"https://zkillboard.com/kill/{package['killID']}/",
+                "footer": stats.zkb_url(),
                 "footer_icon": "https://zkillboard.com/img/wreck.png",
-                "ts": int(
-                    dateutil.parser.parse(
-                        package["killmail"]["killmail_time"]
-                    ).timestamp()
-                ),
-                "thumb_url": f"https://imageserver.eveonline.com/Render/{victim_ship_type}_128.png",
+                "ts": stats.timestamp,
+                "thumb_url": stats.victim_ship_thumb_url(),
                 "fields": [
                     {
                         "short": True,
                         "title": "The attackers",
-                        "value": summarized_entities,
+                        "value": stats.attacker_entities_summary,
                     },
                     {
                         "short": True,
                         "title": "were flying",
-                        "value": summarized_ships,
+                        "value": stats.attacker_ships_summary,
                     },
                 ],
             }
@@ -169,12 +191,12 @@ async def _slack_payload_for_killmail(
                 {
                     "short": True,
                     "title": "Final blow",
-                    "value": final_blow.result(),
+                    "value": stats.final_blow_moniker,
                 },
                 {
                     "short": True,
                     "title": "Top damage",
-                    "value": top_dmg.result(),
+                    "value": stats.top_damage_moniker,
                 },
             ]
         )

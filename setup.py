@@ -18,6 +18,7 @@ setup(
         "async_lru",
         "millify",
         "python-dateutil",
+        "dataclasses;python_version<'3.7'"
     ],
     tests_require=["pytest", "pytest-cov"],
     entry_points={"console_scripts": ["unchaind=unchaind.command:main"]},
