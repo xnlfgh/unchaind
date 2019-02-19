@@ -2,9 +2,8 @@ home_system = 31002238
 
 [[mapper]]
     type = "siggy"
-    [mapper.credentials]
-        username = "bla"
-        password = "bla"
+    username = "bla"
+    password = "bla"
 
 [[notifier]]
     type = "slack"

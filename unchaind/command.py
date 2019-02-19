@@ -79,7 +79,7 @@ class Command:
 
             for mapper in self.config["mapper"]:
                 transport = await get_transport(mapper["type"]).from_config(
-                    mapper.get("credentials", {})
+                    mapper
                 )
                 mapper = get_mapper(mapper["type"])(transport)
                 self.mappers.append(mapper)
