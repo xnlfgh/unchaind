@@ -33,9 +33,8 @@ alliance and posts them to a Discord webhook.::
 
   [[mapper]]
       type = "siggy"
-      [mapper.credentials]
-          username = "bla"
-          password = "bla"
+      username = "bla"
+      password = "bla"
 
   [[notifier]]
       type = "discord"
