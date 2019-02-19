@@ -12,7 +12,7 @@ from tornado.gen import multi
 
 from dataclasses import dataclass
 
-import unchaind.esi_util as esi_util
+import unchaind.util.esi as esi_util
 from unchaind.universe import Universe, System
 
 log = logging.getLogger(__name__)

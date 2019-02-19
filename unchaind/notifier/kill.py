@@ -7,7 +7,7 @@ from typing import Dict, Any, List, Callable
 from asyncio import gather
 
 from unchaind.http import HTTPSession
-from unchaind.notifier.kill_util import payload_for_killmail
+from unchaind.util.kill import payload_for_killmail
 from unchaind.universe import System, Universe
 from unchaind.sink import sinks
 
