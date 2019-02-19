@@ -78,7 +78,7 @@ class Command:
             )
 
             for mapper in self.config["mapper"]:
-                mapper.update("home_system", self.config.get("home_system"))
+                mapper.update({"home_system": self.config.get("home_system")})
 
                 transport = await get_transport(mapper["type"]).from_config(
                     mapper
