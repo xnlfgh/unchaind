@@ -5,9 +5,9 @@ import millify
 import collections
 import operator
 
-from typing import Dict, Any, Optional, Callable, Awaitable
+from typing import Dict, Any, Optional, Callable
 
-from asyncio import gather, ensure_future, Future
+from asyncio import gather
 from tornado.gen import multi
 
 from dataclasses import dataclass
@@ -20,7 +20,8 @@ log = logging.getLogger(__name__)
 
 async def char_name_with_ticker(char: Dict[str, Any]) -> str:
     """Given a zkb attacker or victim, return character name
-    or something close."""
+       or something close."""
+
     try:
         if "character_id" in char:
             details, entity = await gather(
@@ -37,14 +38,16 @@ async def char_name_with_ticker(char: Dict[str, Any]) -> str:
         elif "faction_id" in char:
             # If we have none of the above, just a faction, it was an NPC
             return "NPC"
-    except:
-        pass
-    return "???"
+    except Exception as e:
+        log.exception(e)
+
+    return "?????"
 
 
 async def entity_ticker_for_char(char: Dict[str, Any]) -> str:
     """Given a zkb attacker or victim, return alliance/corp ticker
-    or something close."""
+       or something close."""
+
     try:
         if "alliance_id" in char:
             alliance = await esi_util.alliance_details(char["alliance_id"])
@@ -54,8 +57,9 @@ async def entity_ticker_for_char(char: Dict[str, Any]) -> str:
             return str(corp["ticker"])
         elif "faction_id" in char:
             return "{NPC}"
-    except:
-        pass
+    except Exception as e:
+        log.exception(e)
+
     return "?????"
 
 
@@ -97,6 +101,7 @@ async def stats_for_killmail(
 ) -> KillmailStats:
     victim_ship_typeid: int = int(package["killmail"]["victim"]["ship_type_id"])
     solar_system_id: int = int(package["killmail"]["solar_system_id"])
+
     d = {
         "victim_moniker": char_name_with_ticker(package["killmail"]["victim"]),
         "victim_ship": esi_util.type_details(victim_ship_typeid),
@@ -126,7 +131,9 @@ async def stats_for_killmail(
         ),
         "solar_system_name": universe.system_name(System(solar_system_id)),
     }
+
     d = await multi(d)
+
     d["victim_ship"] = d["victim_ship"]["name"]
     d["attacker_entities_summary"] = _stringify_counter_by_popularity(
         collections.Counter(d["attacker_entities"])
@@ -136,15 +143,18 @@ async def stats_for_killmail(
             map(operator.itemgetter("name"), d["attacker_ships"])
         )
     )
+
     d.pop("attacker_entities", None)
     d.pop("attacker_ships", None)
+
     d["timestamp"] = int(
         dateutil.parser.parse(package["killmail"]["killmail_time"]).timestamp()
     )
     d["victim_ship_typeid"] = victim_ship_typeid
     d["kill_id"] = package["killID"]
-    d["isk_value"] = package['zkb']['totalValue']
+    d["isk_value"] = package["zkb"]["totalValue"]
     d["solar_system_id"] = solar_system_id
+
     return KillmailStats(**d)
 
 
