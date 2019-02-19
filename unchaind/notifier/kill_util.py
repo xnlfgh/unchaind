@@ -98,64 +98,78 @@ class KillmailStats:
 
 async def stats_for_killmail(
     package: Dict[str, Any], universe: Universe
-) -> KillmailStats:
-    victim_ship_typeid: int = int(package["killmail"]["victim"]["ship_type_id"])
-    solar_system_id: int = int(package["killmail"]["solar_system_id"])
+) -> Optional[KillmailStats]:
 
-    d = {
-        "victim_moniker": char_name_with_ticker(package["killmail"]["victim"]),
-        "victim_ship": esi_util.type_details(victim_ship_typeid),
-        "final_blow_moniker": char_name_with_ticker(
-            next(
-                filter(
-                    lambda x: x["final_blow"], package["killmail"]["attackers"]
-                )
-            )
-        ),
-        "top_damage_moniker": char_name_with_ticker(
-            max(
-                package["killmail"]["attackers"], key=lambda x: x["damage_done"]
-            )
-        ),
-        "attacker_entities": gather(
-            *[
-                entity_ticker_for_char(x)
-                for x in package["killmail"]["attackers"]
-            ]
-        ),
-        "attacker_ships": gather(
-            *[
-                (esi_util.type_details(x["ship_type_id"]))
-                for x in package["killmail"]["attackers"]
-            ]
-        ),
-        "solar_system_name": universe.system_name(System(solar_system_id)),
-    }
-
-    d = await multi(d)
-
-    d["victim_ship"] = d["victim_ship"]["name"]
-    d["attacker_entities_summary"] = _stringify_counter_by_popularity(
-        collections.Counter(d["attacker_entities"])
-    )
-    d["attacker_ships_summary"] = _stringify_counter_by_popularity(
-        collections.Counter(
-            map(operator.itemgetter("name"), d["attacker_ships"])
+    try:
+        victim_ship_typeid: int = int(
+            package["killmail"]["victim"]["ship_type_id"]
         )
-    )
+        solar_system_id: int = int(package["killmail"]["solar_system_id"])
 
-    d.pop("attacker_entities", None)
-    d.pop("attacker_ships", None)
+        d = {
+            "victim_moniker": char_name_with_ticker(
+                package["killmail"]["victim"]
+            ),
+            "victim_ship": esi_util.type_details(victim_ship_typeid),
+            "final_blow_moniker": char_name_with_ticker(
+                next(
+                    filter(
+                        lambda x: x["final_blow"],
+                        package["killmail"]["attackers"],
+                    )
+                )
+            ),
+            "top_damage_moniker": char_name_with_ticker(
+                max(
+                    package["killmail"]["attackers"],
+                    key=lambda x: x["damage_done"],
+                )
+            ),
+            "attacker_entities": gather(
+                *[
+                    entity_ticker_for_char(x)
+                    for x in package["killmail"]["attackers"]
+                ]
+            ),
+            "attacker_ships": gather(
+                *[
+                    (esi_util.type_details(x["ship_type_id"]))
+                    for x in package["killmail"]["attackers"]
+                ]
+            ),
+            "solar_system_name": universe.system_name(System(solar_system_id)),
+        }
 
-    d["timestamp"] = int(
-        dateutil.parser.parse(package["killmail"]["killmail_time"]).timestamp()
-    )
-    d["victim_ship_typeid"] = victim_ship_typeid
-    d["kill_id"] = package["killID"]
-    d["isk_value"] = package["zkb"]["totalValue"]
-    d["solar_system_id"] = solar_system_id
+        d = await multi(d)
 
-    return KillmailStats(**d)
+        d["victim_ship"] = d["victim_ship"]["name"]
+        d["attacker_entities_summary"] = _stringify_counter_by_popularity(
+            collections.Counter(d["attacker_entities"])
+        )
+        d["attacker_ships_summary"] = _stringify_counter_by_popularity(
+            collections.Counter(
+                map(operator.itemgetter("name"), d["attacker_ships"])
+            )
+        )
+
+        d.pop("attacker_entities", None)
+        d.pop("attacker_ships", None)
+
+        d["timestamp"] = int(
+            dateutil.parser.parse(
+                package["killmail"]["killmail_time"]
+            ).timestamp()
+        )
+        d["victim_ship_typeid"] = victim_ship_typeid
+        d["kill_id"] = package["killID"]
+        d["isk_value"] = package["zkb"]["totalValue"]
+        d["solar_system_id"] = solar_system_id
+
+        return KillmailStats(**d)
+    except Exception as e:
+        log.exception(e)
+
+    return None
 
 
 async def _slack_payload_for_killmail(
@@ -163,6 +177,10 @@ async def _slack_payload_for_killmail(
 ) -> Optional[Dict[str, Any]]:
 
     stats = await stats_for_killmail(package, universe)
+
+    if not stats:
+        log.warn("_slack_payload_for_killmail: failed to aquire stats")
+        return None
 
     text = f"{stats.victim_moniker} lost a {stats.victim_ship} "
     text += f"worth {stats.pretty_isk_value()} ISK "
