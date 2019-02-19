@@ -39,7 +39,7 @@ alliance and posts them to a Discord webhook.::
   [[notifier]]
       type = "discord"
       webhook = "hook_url"
-      subscribes_to = "system"
+      subscribes_to = "kill"
 
       [notifier.filter]
           require_all_of = [

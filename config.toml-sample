@@ -12,21 +12,6 @@ home_system = 31002238
 
     [notifier.filter]
         require_all_of = [
-            {location: "chain"},
-        ]
-        exclude_if_any = [
-            {alliance_loss: 99999999},
-            {location: "Jita"},
-            {location: "Amarr"},
-        ]
-
-[[notifier]]
-    type = "discord"
-    webhook = "hook_url"
-    subscribes_to = "system"
-
-    [notifier.filter]
-        require_all_of = [
             {alliance_kill: 88888888},
         ]
         require_any_of = [
