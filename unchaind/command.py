@@ -58,8 +58,6 @@ class Command:
         self.universe = await Universe.from_eve()
         self.mappers = []
 
-        loop: ioloop.IOLoop = ioloop.IOLoop.current()
-
         if "path" in self.config and len(self.config["path"]):
             for path in self.config["path"]:
                 state = State()
@@ -115,7 +113,7 @@ class Command:
 
         if "mapper" in self.config and len(self.config["mapper"]):
             # We can keep calling our periodic mappers now
-            poll_mappers: ioloop.PeriodicCallback = ioloop.PeriodicCallback(  # type: ignore
+            poll_mappers: ioloop.PeriodicCallback = ioloop.PeriodicCallback(
                 self.periodic_mappers, 5000
             )
             poll_mappers.start()
@@ -160,7 +158,7 @@ class Command:
                 )
             )
 
-            poll_systems: ioloop.PeriodicCallback = ioloop.PeriodicCallback(  # type: ignore
+            poll_systems: ioloop.PeriodicCallback = ioloop.PeriodicCallback(
                 self.periodic_systems, 5000
             )
             poll_systems.start()

@@ -23,7 +23,7 @@ async def process_one_killmail(
 
     try:
         data = json.loads(killmail_str)
-    except ValueError as err:
+    except ValueError:
         log.warning(
             "process_one_killmail: received invalid JSON (%r)", killmail_str
         )
