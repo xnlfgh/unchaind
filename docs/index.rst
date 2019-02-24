@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. image:: https://unchaind.readthedocs.io/en/latest/_static/logo.png
-
 unchaind
 ########
+
+.. image:: https://unchaind.readthedocs.io/en/latest/_static/logo.png
 
 ``unchaind`` is a tool for EVE Online groups that use wormhole space. It offers
 several tools on your Discord to make your life easier. These include automatic
