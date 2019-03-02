@@ -83,10 +83,19 @@ class Command:
                 transport = await get_transport(mapper["type"]).from_config(
                     mapper
                 )
-                mapper = get_mapper(mapper["type"])(transport)
-                self.mappers.append(mapper)
 
-            log.info("initialize: mappers initialized, starting initial pass.")
+                if transport is None:
+                    log.warn(
+                        "initialize: failed to create %s mapper", mapper["type"]
+                    )
+                else:
+                    mapper = get_mapper(mapper["type"])(transport)
+                    self.mappers.append(mapper)
+
+            log.info(
+                "initialize: %d mappers initialized, starting initial pass.",
+                len(self.mappers),
+            )
 
             # Run our initial pass to get all the results without firing their
             # callbacks since we're booting
