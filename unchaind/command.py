@@ -183,24 +183,35 @@ class Command:
 
         log.debug("periodic_mappers: running")
 
-        results = await gather(
+        results_update = await gather(
             *[mapper.update() for mapper in self.mappers],
             return_exceptions=True,
         )
+        results_list = list(results_update)
 
-        results = tuple(
-            result for result in results if not isinstance(result, Exception)
-        )
+        # If any of the results was an exception we want to remove that mapper
+        # from our rotation, as we likely can't recover. I am unsure if this is the
+        # best way to do so but this is the place to add more handling (like a retry).
+        for index, result in enumerate(results_list):
+            if isinstance(result, Exception):
+                log.warn(
+                    "periodic_mappers: %s raised exception and has been removed",
+                    self.mappers[index],
+                )
+                results_list.pop(index)
+                self.mappers.pop(index)
 
         # We use a full filter over the universes returned from the mappers as
         # many groups use certain systems that make the maps filled with
         # non-existent connections
         # XXX there has to be a better way for this
-        results = await gather(
-            *[universe_cleanup(result) for result in results]
+        results_cleanup = await gather(
+            *[universe_cleanup(result) for result in results_list]
         )
 
-        await gather(*[self.universe.update_with(result) for result in results])
+        await gather(
+            *[self.universe.update_with(result) for result in results_cleanup]
+        )
 
         log.debug(
             "periodic_mappers: finished, got {} sys and {} conn.".format(

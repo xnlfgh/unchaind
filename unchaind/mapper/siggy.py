@@ -162,4 +162,4 @@ class Transport:
             return dict(json.loads(update_response.body.decode("utf8")))
         except (ValueError, AttributeError, json.decoder.JSONDecodeError):
             log.critical("update: got invalid json from siggy on update")
-            raise SystemExit(1)
+            raise ValueError
