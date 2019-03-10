@@ -83,14 +83,18 @@ class Transport:
         self.config = config
 
     @classmethod
-    async def from_config(cls, config: Dict[str, Any]) -> "Transport":
+    async def from_config(cls, config: Dict[str, Any]) -> Optional["Transport"]:
         """Create an initial instance of a Siggy class, this logs in with the
            provided username and password and does an initial fill of the
            universe."""
 
         instance = cls(config)
 
-        await instance.login(config["username"], config["password"])
+        try:
+            await instance.login(config["username"], config["password"])
+        except ValueError:
+            return None
+
         await instance.update()
 
         return instance
@@ -116,7 +120,7 @@ class Transport:
 
         csrf_token = tree.xpath("//input[@name='_token']/@value")[0]
 
-        await self.http.request(
+        response = await self.http.request(
             url="https://siggy.borkedlabs.com/account/login",
             method="POST",
             follow_redirects=False,
@@ -130,7 +134,13 @@ class Transport:
             ),
         )
 
-        # XXX ensure we got a valid login here?
+        # When a login fails for siggy we get put back on the login screen,
+        # if the login succeeded we get directed to the home page. This is
+        # a quick check to verify if a login succeeded.
+
+        if "login" in response.effective_url:
+            log.warn("login: redirected back to login, wrong credentails?")
+            raise ValueError
 
     async def update(self) -> Dict[str, Any]:
         """Update our internal Universe from siggy."""
@@ -151,5 +161,5 @@ class Transport:
         try:
             return dict(json.loads(update_response.body.decode("utf8")))
         except (ValueError, AttributeError, json.decoder.JSONDecodeError):
-            log.critical("login: got invalid json from siggy on update")
-            raise SystemExit(1)
+            log.critical("update: got invalid json from siggy on update")
+            raise ValueError

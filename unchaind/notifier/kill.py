@@ -7,8 +7,8 @@ from typing import Dict, Any, List, Callable
 from asyncio import gather
 
 from unchaind.http import HTTPSession
-from unchaind.notifier.kill_util import payload_for_killmail
-from unchaind.universe import System, Universe
+from unchaind.util.kill import payload_for_killmail
+from unchaind.universe import System, Universe, Multiverse
 from unchaind.sink import sinks
 
 
@@ -16,14 +16,16 @@ log = logging.getLogger(__name__)
 
 
 async def process_one_killmail(
-    killmail_str: str, config: Dict[str, Any], universe: Universe
+    killmail_str: str, config: Dict[str, Any], universes: Dict[str, Universe]
 ) -> None:
     """Attempt to parse killmail_str as zkb-provided JSON, then invokes
     appropriate matchers & notifiers as configured"""
 
+    universe = await Multiverse.from_universes(*universes.values())
+
     try:
         data = json.loads(killmail_str)
-    except ValueError as err:
+    except ValueError:
         log.warning(
             "process_one_killmail: received invalid JSON (%r)", killmail_str
         )
@@ -77,7 +79,7 @@ async def process_one_killmail(
     )
 
 
-async def loop(config: Dict[str, Any], universe: Universe) -> None:
+async def loop(config: Dict[str, Any], universes: Dict[str, Universe]) -> None:
     """Run a single iteration of the zkillboard RedisQ API which lists all
        kills then we filter those kills."""
 
@@ -103,7 +105,7 @@ async def loop(config: Dict[str, Any], universe: Universe) -> None:
         log.warning("loop: %s (%r)", err, response.body, exc_info=err)
         return
 
-    await process_one_killmail(killmail_str, config, universe)
+    await process_one_killmail(killmail_str, config, universes)
 
 
 async def _match_location(
@@ -257,7 +259,7 @@ async def match_killmail(
 
         async def apply_matchers(section: str) -> List[bool]:
             rv = []
-            for d in notifier["filter"].get(section, []):
+            for d in notifier.get("filter", {}).get(section, []):
                 for name, value in d.items():
                     filter_result = await matchers[name](
                         value, package, universe

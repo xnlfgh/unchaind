@@ -6,6 +6,8 @@
 unchaind
 ########
 
+.. image:: https://unchaind.readthedocs.io/en/latest/_static/logo.png
+
 ``unchaind`` is a tool for EVE Online groups that use wormhole space. It offers
 several tools on your Discord to make your life easier. These include automatic
 notifications for kills happening in your chain, systems being found in your

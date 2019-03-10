@@ -2,14 +2,15 @@
 import logging
 
 from asyncio import gather
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 
 import click
 import functools
 
 from tornado import ioloop
 
-from unchaind.mapper.siggy import Map as SiggyMap
+from unchaind.mapper.siggy import Map as SiggyMapper
+from unchaind.mapper.evescout import Map as EVEScoutMapper
 
 from unchaind.universe import Universe, State, Connection, System
 from unchaind.notifier.kill import loop as loop_kills
@@ -44,8 +45,8 @@ class Command:
     """The running command that wraps everything to read configuration and
        setup all the mappers."""
 
-    universe: Universe
-    mappers: List[SiggyMap]
+    universes: Dict[str, Universe]
+    mappers: Dict[str, Union[SiggyMapper, EVEScoutMapper]]
 
     def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
@@ -55,12 +56,15 @@ class Command:
         does not start any periodic callbacks or loops.
 
         Prereq of daemon() and killmail_oneshot()."""
-        self.universe = await Universe.from_eve()
-        self.mappers = []
+        self.universes = {}
+        self.mappers = {}
 
-        loop: ioloop.IOLoop = ioloop.IOLoop.current()
-
+        # Path is a custom universe where users can add jumpbridges or other
+        # custom connections. If it is in use we create a universe for it and
+        # add all custom connections.
         if "path" in self.config and len(self.config["path"]):
+            self.universes["_path"] = await Universe.from_empty()
+
             for path in self.config["path"]:
                 state = State()
                 setattr(state, path["type"], True)
@@ -70,7 +74,7 @@ class Command:
 
                 connection = Connection(left, right, state)
 
-                await self.universe.connect(connection)
+                await self.universes["_path"].connect(connection)
 
         if "mapper" in self.config and len(self.config["mapper"]):
             log.info(
@@ -79,32 +83,49 @@ class Command:
                 )
             )
 
-            for mapper in self.config["mapper"]:
-                transport = await get_transport(mapper["type"]).from_config(
-                    mapper.get("credentials", {})
-                )
-                mapper = get_mapper(mapper["type"])(transport)
-                self.mappers.append(mapper)
+            for index, mapper in enumerate(self.config["mapper"]):
+                mapper.update({"home_system": self.config.get("home_system")})
 
-            log.info("initialize: mappers initialized, starting initial pass.")
+                transport = await get_transport(mapper["type"]).from_config(
+                    mapper
+                )
+
+                if transport is None:
+                    log.warn(
+                        "initialize: failed to create %s mapper", mapper["type"]
+                    )
+                else:
+                    # The transport has been created, we can now create a name
+                    # and universe for this mapper.
+                    self.universes[
+                        f"_{mapper['type']}_{index}"
+                    ] = await Universe.from_empty()
+                    self.mappers[f"_{mapper['type']}_{index}"] = get_mapper(
+                        mapper["type"]
+                    )(transport)
+
+            log.info(
+                "initialize: %d mappers initialized, starting initial pass.",
+                len(self.mappers),
+            )
 
             # Run our initial pass to get all the results without firing their
             # callbacks since we're booting
             await self.periodic_mappers()
 
-            log.info(
-                "initialize: mappers finished, got {} systems and {} connections.".format(
-                    len(self.universe.systems), len(self.universe.connections)
-                )
-            )
+            # XXX
+            # log.info(
+            #    "initialize: mappers finished, got {} systems and {} connections.".format(
+            #        len(self.universe.systems), len(self.universe.connections)
+            #    )
+            # )
 
     async def killmail_oneshot(self, killmail_str: str) -> None:
         """Given a string of zkb JSON data, performs one run of the mappers
         to load up our Universe, then runs kill notifiers/matchers as configured.
         Intended for debugging/testing/development."""
         await self._initialize()
-
-        await oneshot_kill(killmail_str, self.config, self.universe)
+        await oneshot_kill(killmail_str, self.config, self.universes)
 
     async def daemon(self) -> None:
         """Long-running loop that periodically runs all configured mappers,
@@ -113,13 +134,13 @@ class Command:
 
         loop: ioloop.IOLoop = ioloop.IOLoop.current()
 
-        if "mapper" in self.config and len(self.config["mapper"]):
-            # We can keep calling our periodic mappers now
-            poll_mappers: ioloop.PeriodicCallback = ioloop.PeriodicCallback(  # type: ignore
+        if self.mappers:
+            poll_mappers: ioloop.PeriodicCallback = ioloop.PeriodicCallback(
                 self.periodic_mappers, 5000
             )
             poll_mappers.start()
 
+        # XXX this is all very ugly!
         # Check if any notifiers subscribe to kills
         if "notifier" in self.config and len(
             [n for n in self.config["notifier"] if n["subscribes_to"] == "kill"]
@@ -160,7 +181,7 @@ class Command:
                 )
             )
 
-            poll_systems: ioloop.PeriodicCallback = ioloop.PeriodicCallback(  # type: ignore
+            poll_systems: ioloop.PeriodicCallback = ioloop.PeriodicCallback(
                 self.periodic_systems, 5000
             )
             poll_systems.start()
@@ -170,39 +191,22 @@ class Command:
             )
 
     async def periodic_mappers(self, init: bool = True) -> None:
-        """Run all of our mappers periodically."""
+        """Run all of our mappers periodically. This means we call .update on
+           the mapper instances and update their related universes."""
 
         log.debug("periodic_mappers: running")
 
-        results = await gather(
-            *[mapper.update() for mapper in self.mappers],
-            return_exceptions=True,
-        )
+        for name, mapper in self.mappers.items():
+            universe = await mapper.update()
+            await self.universes[name].update_with(universe)
 
-        results = tuple(
-            result for result in results if not isinstance(result, Exception)
-        )
-
-        # We use a full filter over the universes returned from the mappers as
-        # many groups use certain systems that make the maps filled with
-        # non-existent connections
-        # XXX there has to be a better way for this
-        results = await gather(
-            *[universe_cleanup(result) for result in results]
-        )
-
-        await gather(*[self.universe.update_with(result) for result in results])
-
-        log.debug(
-            "periodic_mappers: finished, got {} sys and {} conn.".format(
-                len(self.universe.systems), len(self.universe.connections)
-            )
-        )
+        log.debug("periodic_mappers: done")
 
     async def periodic_systems(self) -> None:
-        """Call loop for our systems with our current Universe."""
+        """Call loop for our systems with our current Universes."""
         log.debug("periodic_systems: running")
-        await periodic_systems(self.config, self.universe)
+        await periodic_systems(self.config, self.universes)
+        log.debug("periodic_systems: done")
 
     async def loop_kills(self) -> None:
         """Call loop for our killboard provider with our current Universe. The
@@ -211,7 +215,7 @@ class Command:
 
         while True:
             log.debug("loop_kills: running")
-            await loop_kills(self.config, self.universe)
+            await loop_kills(self.config, self.universes)
 
 
 @click.command()

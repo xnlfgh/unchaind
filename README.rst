@@ -33,14 +33,13 @@ alliance and posts them to a Discord webhook.::
 
   [[mapper]]
       type = "siggy"
-      [mapper.credentials]
-          username = "bla"
-          password = "bla"
+      username = "bla"
+      password = "bla"
 
   [[notifier]]
       type = "discord"
       webhook = "hook_url"
-      subscribes_to = "system"
+      subscribes_to = "kill"
 
       [notifier.filter]
           require_all_of = [
@@ -57,3 +56,10 @@ After saving this in ``config.toml`` you can then run
 You can read more about available filters in our documentation but you can
 filter on alliance, corporation, location (regions, your siggy chain, systems),
 characters, items, value, and more.
+
+Community
+=========
+This project is still very much in development, we do however have a Discord_
+server that you can join to ask questions and/or help out.
+
+.. _Discord:  https://discord.gg/VpFXhCC

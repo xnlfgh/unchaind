@@ -2,29 +2,13 @@ home_system = 31002238
 
 [[mapper]]
     type = "siggy"
-    [mapper.credentials]
-        username = "bla"
-        password = "bla"
+    username = "bla"
+    password = "bla"
 
 [[notifier]]
     type = "slack"
     webhook = "hook_url"
     subscribes_to = "kill"
-
-    [notifier.filter]
-        require_all_of = [
-            {location: "chain"},
-        ]
-        exclude_if_any = [
-            {alliance_loss: 99999999},
-            {location: "Jita"},
-            {location: "Amarr"},
-        ]
-
-[[notifier]]
-    type = "discord"
-    webhook = "hook_url"
-    subscribes_to = "system"
 
     [notifier.filter]
         require_all_of = [

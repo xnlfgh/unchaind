@@ -7,7 +7,11 @@ configuration language but not necessary as one can go off the provided example
 file as well.
 
 The configuration is formatted in multiple sections which each do different
-things.
+things. Some options are configured globally:
+
+home_system
+-----------
+Used for route finding. This is currently an EVE system ID.
 
 Mappers
 =======
@@ -37,10 +41,6 @@ maps that you want ``unchaind`` to use.
 password
 --------
 The password for the username you provided.
-
-home_system
------------
-Used for route finding. This is currently an EVE system ID.
 
 Notifiers
 =========

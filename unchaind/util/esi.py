@@ -2,7 +2,7 @@
 import logging
 import json
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 from async_lru import alru_cache
 
 from unchaind.http import HTTPSession
