@@ -84,5 +84,5 @@ class Transport:
                 )
             )
         except (ValueError, AttributeError, json.decoder.JSONDecodeError):
-            log.critical("update: failed to parse EVEScout reply")
-            raise SystemExit(1)
+            log.warn("update: failed to parse EVEScout reply")
+            raise ValueError

@@ -44,6 +44,13 @@ class Map:
 
         connections = chain["wormholes"]
 
+        if isinstance(connections, list):
+            # For some weird reason when there are no connections siggy changes
+            # the type of this to a list instead of a dict
+            log.debug("update: connections was a list")
+            self.universe = universe
+            return universe
+
         for connection in connections.values():
             state = State()
             state.end_of_life = bool(connection.get("eol", 0))
@@ -58,6 +65,7 @@ class Map:
 
         aliases: Dict[System, str] = {}
         systems = chain["systems"]
+
         for system in systems.values():
             if (
                 len(system.get("displayName", ""))

@@ -197,7 +197,15 @@ class Command:
         log.debug("periodic_mappers: running")
 
         for name, mapper in self.mappers.items():
-            universe = await mapper.update()
+            try:
+                universe = await mapper.update()
+            except ValueError:
+                log.warn(
+                    "periodic_mappers: valueerror for %s, skipping this update cycle",
+                    name,
+                )
+                continue
+
             await self.universes[name].update_with(universe)
 
         log.debug("periodic_mappers: done")
