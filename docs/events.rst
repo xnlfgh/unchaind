@@ -11,7 +11,7 @@ event are configured ``unchaind`` will keep track of the live feed of
 zkillboard_ kills and try to match them with your filter configuration. If a
 killmail is matched it will be posted to the notifiers' output.
 
-filters
+example
 -------
 Kill supports a slew of filters. Let's start with an example configuration for
 a kill notifier:::
@@ -28,3 +28,67 @@ a kill notifier:::
               location = ["chain"]
           [notifier.filter.exclude_if_any]
               alliance_loss = [99999998]
+
+filters
+-------
+The following filters are supported by the kill event type:
+
+location
+^^^^^^^^
+The ``location`` filter uses the system id where the kill took place to filter
+results.
+
+alliance
+^^^^^^^^
+The ``alliance`` filter looks if the supplied alliance id is on either the
+attacker or loss side of the killmail.
+
+alliance_kill
+^^^^^^^^^^^^^
+The ``alliance_kill`` filter looks if the supplied alliance id is on the 
+attacker side of the killmail.
+
+alliance_loss
+^^^^^^^^^^^^^
+The ``alliance_loss`` filter looks if the supplied alliance id is on the 
+losing side of the lossmail.
+
+corporation
+^^^^^^^^^^^
+The ``corporation`` filter looks if the supplied corporation id is on either the
+attacker or loss side of the killmail.
+
+corporation_kill
+^^^^^^^^^^^^^^^^
+The ``corporation_kill`` filter looks if the supplied corporation id is on the 
+attacker side of the killmail.
+
+corporation_loss
+^^^^^^^^^^^^^^^^
+The ``corporation_loss`` filter looks if the supplied corporation id is on the 
+losing side of the lossmail.
+
+character
+^^^^^^^^^
+The ``character`` filter looks if the supplied character id is on either the
+attacker or loss side of the killmail.
+
+character_kill
+^^^^^^^^^^^^^^
+The ``character_kill`` filter looks if the supplied character id is on the 
+attacker side of the killmail.
+
+character_loss
+^^^^^^^^^^^^^^
+The ``character_loss`` filter looks if the supplied character id is on the 
+losing side of the lossmail.
+
+minimum_value
+^^^^^^^^^^^^^
+The ``minimum_value`` filter uses the minimum value of the killmail to filter
+on.
+
+security
+^^^^^^^^
+The ``security`` filter uses the security status of the system to include or
+exclude killmails.
