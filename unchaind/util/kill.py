@@ -230,8 +230,56 @@ async def _slack_payload_for_killmail(
         )
 
     return rv
+async def _discord_payload_for_killmail(
+    notifier: Dict[str, Any], package: Dict[str, Any], universe: Universe
+) -> Optional[Dict[str, Any]]:
 
+    stats = await stats_for_killmail(package, universe)
+
+    if not stats:
+        log.warn("_discord_payload_for_killmail: failed to aquire stats")
+        return None
+
+    text = f"{stats.victim_moniker} lost a {stats.victim_ship} "
+    text += f"worth {stats.pretty_isk_value()} ISK "
+    text += f"\nin *{stats.solar_system_name}* "
+
+    rv = {
+        "embeds": [
+            {
+                "title": text,
+                "description": "[zKill]("+stats.zkb_url()+")",
+                "color": 7471618,
+                "thumbnail": {
+                  "url": stats.victim_ship_thumb_url(),
+                             },
+                "footer": {
+                   "icon_url": "https://zkillboard.com/img/wreck.png",
+                   "text": stats.zkb_url(),
+                          },
+                "fields": [
+                    {
+                        "inline": True,
+                        "name": "The attackers",
+                        "value": stats.attacker_entities_summary,
+                    },
+                    {
+                        "inline": True,
+                        "name": "were flying",
+                        "value": stats.attacker_ships_summary,
+                    },
+
+                ],
+
+            }
+        ]
+    }
+
+
+
+    return rv
 
 payload_for_killmail: Dict[str, Callable] = {
-    "slack": _slack_payload_for_killmail
+    "slack": _slack_payload_for_killmail,
+    "discord": _discord_payload_for_killmail
 }

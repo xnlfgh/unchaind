@@ -18,13 +18,22 @@ async def discord(
     payload: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Send a Discord message to the configured channel."""
-    http = HTTPSession()
+    if payload is not None:
+       http = HTTPSession()
 
-    await http.request(
-        url=notifier["webhook"],
-        method="POST",
-        body=json.dumps({"content": message}),
-    )
+       await http.request(
+         url=notifier["webhook"],
+         method="POST",
+         body=json.dumps(payload)
+       )
+    else:
+        http = HTTPSession()
+
+        await http.request(
+         url=notifier["webhook"],
+         method="POST",
+         body=json.dumps({"content": message}),
+       )
 
 
 async def console(
