@@ -9,14 +9,14 @@ git checkout
 ------------
 Start by creating a fork on github_. Then clone the repository into a local
 checkout with ``git clone https://github.com/username/unchaind``. This will
-allow you to create pull requests later on.
+allow you to create pull requests for any changes you make.
 
 Virtual Environment
 -------------------
 Now enter your checkout with ``cd unchaind/`` and create a virtual environment.
 This will allow you to keep all your dependencies local to your environment
 instead of clobbering the system. You can do this by doing a quick
-``python3.6 -m venv .venv`` and then a ``.venv/bin/activate`` to put the
+``python3.6 -m venv .venv`` and then a ``source .venv/bin/activate`` to put the
 environments environment variables to use.
 
 After this you can install all required dependencies for ``unchaind`` with
@@ -37,6 +37,8 @@ Any pull requests are welcome but especially those involving our current
 issues_. There's some marked as a `good first issue` but you can try
 your hand at any. Just let us know in the issues_ that you are working on a
 pull request for them!
+
+We are also always looking for more filters.
 
 .. _github: https://github.com/supakeen/unchaind
 .. _issues: https://github.com/supakeen/unchaind/issues

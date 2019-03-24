@@ -15,11 +15,14 @@ chain and/or specific notifications for new systems in jump range. It can also
 be used as a generic killbot which can filter kills in many ways.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
+   installation
    configuration
    notifiers
    mappers
    events
+   mappers
+   technical
    development
