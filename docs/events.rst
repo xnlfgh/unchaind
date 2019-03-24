@@ -92,3 +92,18 @@ security
 ^^^^^^^^
 The ``security`` filter uses the security status of the system to include or
 exclude killmails.
+
+system
+======
+The system filter runs for new systems being added to the map, for example
+a system that was added to one of the mappers that you have configured.
+
+filters
+-------
+There are no filters yet for the system event. If you configure it a message
+will be sent to the configured webhook for every new system found.::
+
+  [[notifier]]
+      type = "system"
+      webhook = "hook_url"
+      subscribes_to = "system"
